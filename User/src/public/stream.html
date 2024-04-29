@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        video {
+            width: 640px;
+            height: 360px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Stream</h1>
+    <video id="videoPlayer" controls autoplay>
+        <!-- Video source will be dynamically set using JavaScript -->
+    </video>
+
+    <script>
+        // Fetch the live stream URL from the server
+        async function fetchStreamUrl() {
+            try {
+                const response = await fetch('/stream');
+                const data = await response.json();
+
+                if (data.url) {
+                    // Set the video source to the live stream URL
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    videoPlayer.src = data.url;
+                } else {
+                    console.error('Stream URL not found');
+                }
+            } catch (error) {
+                console.error('Error fetching stream URL:', error);
+            }
+        }
+
+        // Call the fetchStreamUrl function when the page loads
+        window.onload = fetchStreamUrl;
+    </script>
+</body>
+</html>
