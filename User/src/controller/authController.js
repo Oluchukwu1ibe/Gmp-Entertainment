@@ -3,6 +3,8 @@ import {
   createJwtToken,
   verifyJwtToken,
 } from "../middleware/token.js";
+import _ from "lodash";
+import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 
 export const register = async (req, res) => {
