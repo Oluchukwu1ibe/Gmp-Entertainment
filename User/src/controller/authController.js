@@ -4,7 +4,6 @@ import {
   verifyJwtToken,
 } from "../middleware/token.js";
 import _ from "lodash";
-import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 
 export const register = async (req, res) => {
@@ -29,13 +28,11 @@ export const register = async (req, res) => {
     });
     // create  a token for this user and send it back as response
     const payload = {
-      user: {
-        _id: newUser._id,
-        FullName: newUser.FullName,
-        PhoneNumber: newUser.PhoneNumber,
-        email: newUser.email,
-        password: newUser.password,
-      },
+      userId: newUser._id,
+      FullName: newUser.FullName,
+      PhoneNumber: newUser.PhoneNumber,
+      email: newUser.email,
+      role: newUser.role, 
     };
     const token = createJwtToken(payload);
 
@@ -66,22 +63,20 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid email" });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Wrong password credentials" });
+      return res.status(401).json({ message: "Invalid password" });
     }
     //  Create JWT payload and sign the token
     const payload = {
-      user: {
-        _id: user._id,
-        FullName: user.FullName,
-        PhoneNumber: user.PhoneNumber,
-        email: user.email,
-        role: user.role,
-      },
+      userId: user._id,
+      FullName: user.FullName,
+      PhoneNumber: user.PhoneNumber,
+      email: user.email,
+      role: user.role, 
     };
     const token = createJwtToken(payload);
 

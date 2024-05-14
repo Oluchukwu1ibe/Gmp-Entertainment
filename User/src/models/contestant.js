@@ -6,10 +6,18 @@ const contestantSchema = new Schema({
     required: true,
     trim: true,
   },
+  image:{
+    type: [String],
+  },
   voteCount: {
     type: Number,
     default: 0,
   },
+},
+{
+  timestamps:true,
+  versionKey:false,
+  
 });
 
 export default model("Contestant", contestantSchema);

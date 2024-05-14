@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import  { verifyJwtToken } from "./token.js";
 
-module.exports = async (req, res, next) => {
+export default async (req, res, next) => {
     try {
       const header = req.headers.authorization;
 

@@ -1,9 +1,8 @@
-import User from "../models/User.js";
-import { verifyJwtToken } from "./token";
+import { verifyJwtToken } from "./token.js";
 
-module.exports = async (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   try {
-    // check for auth header from client
+    // Check for auth header from client
     const header = req.headers.authorization;
 
     if (!header) {
@@ -11,32 +10,27 @@ module.exports = async (req, res, next) => {
       return;
     }
 
-    // verify  auth token
+    // Verify auth token
     const token = header.split("Bearer ")[1];
-
+    
     if (!token) {
       next({ status: 403, message: "auth token is missing" });
       return;
     }
-    // verify the userId with the token
-    const userId = verifyJwtToken(token, next);
+    // Decode the token to get the user ID
+    const decoded = verifyJwtToken(token);
 
-    if (!userId) {
-      next({ status: 403, message: "incorrect token" });
-      return;
-    }
-    // check for the user if exist
-    const user = await User.findById(userId);
+     // Check if userId is available
+     if (!decoded) {
+       return next({ status: 403, message: "incorrect token" });
+     }
 
-    if (!user) {
-      next({ status: 404, message: "User not found" });
-      return;
-    }
-
-    res.locals.user = user;
+    req.user = decoded;
 
     next();
   } catch (err) {
     next(err);
   }
 };
+
+export default authenticateToken;

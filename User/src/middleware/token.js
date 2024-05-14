@@ -5,13 +5,12 @@ export const createJwtToken = (payload) => {
   return token;
 };
 
-export const verifyJwtToken = (token,next) => {
+export const verifyJwtToken = (token) => {
   try {
-    const { userId } = jwt.verify(token, process.env.TOKEN_KEY);
-    return userId;
-  } catch (err) {
-    next();
-    console.log(err.message);
+    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
+    return decoded.userId;
+  } catch (error) {
+    throw new Error('Invalid token');
   }
 };
 

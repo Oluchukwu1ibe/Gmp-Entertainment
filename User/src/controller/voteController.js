@@ -5,67 +5,61 @@ import User from '../models/User.js';
 
 // Create a new vote
 export const createVote = async (req, res) => {
-    try {
-      const { userId, contestantId, voteCount } = req.body;
-  
+  try {
+      // Obtain userId from user authentication (e.g., from session or token)
+      const userId = req.user; // Assuming userId is stored in req.user after authentication
       // Check if user exists
       const user = await User.findById(userId);
       if (!user) {
-        throw new Error('User not found');
+        return res.status(404).json({ error: "User not found" });
       }
-  
+
+      // check if user.isVoted=true
+      if (user.isVoted) {
+        return res.status(400).json({ error: "User has already voted" });
+        
+      }
+
+      // Obtain contestantId from request body (sent from frontend)
+      const { contestantId } = req.body;
+
+
       // Check if contestant exists
       const contestant = await Contestant.findById(contestantId);
       if (!contestant) {
-        throw new Error('Contestant not found');
+          return res.status(404).json({ error: "Contestant not found" });
       }
-  
-      // Create a new vote
-      const vote = new Vote({ user: userId, contestant: contestantId, voteCount });
-      await vote.save();
-  
-      // Update contestant points
-      contestant.voteCount = (contestant.voteCount || 0) + voteCount;
-      await contestant.save();
 
+      // Create a new vote
+      const vote = new Vote({ user: userId, contestant: contestantId });
+      await vote.save();
+
+      // Update contestant's vote count
+      contestant.voteCount = (contestant.voteCount || 0) + 1;
+      await contestant.save();
+      // update user isVoted
       user.isVoted = true;
-      //save the document
       await user.save();
-  
+      // Return success message
       res.status(201).json({ message: 'Vote created successfully', vote });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  } catch (error) {
+    console.error("Error in creating vote:", error);
+    res.status(500).json({ error: "Server Error" });
+
+  }
+};
   
   // Get all votes
   export const getVotes = async (req, res) => {
     try {
-      const votes = await Vote.find().populate('user').populate('contestant');
-      res.status(200).json(votes);
+      const totalVotesCount = await Vote.countDocuments();
+      const votes = await Vote.find().populate('user').populate('contestant').sort({ _id: -1 });
+      res.status(200).json({ message: "Votes information", totalVotesCount, votes });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
   };
   
-  // Get votes by user
-  export const getUserVotes = async (req, res) => {
-    try {
-      const userId = req.params.userId;
-      const votes = await Vote.find({ user: userId }).populate('contestant');
-      res.status(200).json(votes);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
   
-  // Get votes by contestant
-  export const getContestantVotes = async (req, res) => {
-    try {
-      const contestantId = req.params.contestantId;
-      const votes = await Vote.find({ contestant: contestantId }).populate('user');
-      res.status(200).json(votes);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  
+ 
