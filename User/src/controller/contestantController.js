@@ -4,10 +4,10 @@ import cloudinary from "../utils/cloudinary.js";
 // register contestant
 export const createContestant = async (req, res) => {
     try {
-      const { name} = req.body;
+      const { name,age,sex,hobby} = req.body;
       
       // Validate input
-      if (!name) {
+      if (!(name||age||sex||hobby)) {
         return res.status(400).json({ error: "Please provide a name" });
       }
   
@@ -35,6 +35,9 @@ export const createContestant = async (req, res) => {
       // Save new contestant to the database
       const contestant = await Contestant.create({
         name,
+        age,
+        sex,
+        hobby,
         image: results.map((result) => result.imageUrl), // Use results instead of result
       });
   
@@ -44,6 +47,9 @@ export const createContestant = async (req, res) => {
       res.status(500).json({ error: "Server Error" });
     }
   };
+
+//   verify the otp sent
+
   
 
 //   Get all contestant

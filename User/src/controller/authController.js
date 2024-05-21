@@ -1,10 +1,10 @@
 import User from "../models/User.js";
-import {
-  createJwtToken,
-  verifyJwtToken,
-} from "../middleware/token.js";
+import { createJwtToken, verifyJwtToken } from "../middleware/token.js";
 import _ from "lodash";
 import nodemailer from "nodemailer";
+import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
+import generateOtp from "../utils/otpGenerator.js";
+import logger from "../utils/log/logger.js";
 
 export const register = async (req, res) => {
   try {
@@ -26,27 +26,84 @@ export const register = async (req, res) => {
       email,
       password,
     });
-    // create  a token for this user and send it back as response
-    const payload = {
-      userId: newUser._id,
-      FullName: newUser.FullName,
-      PhoneNumber: newUser.PhoneNumber,
-      email: newUser.email,
-      role: newUser.role, 
-    };
-    const token = createJwtToken(payload);
-
-    res
-      .status(201)
-      .json({ message: "User registered successfully", newUser, token });
-    // if (newUser.role === 'admin') {
-    //   res.redirect('/admin-dashboard' );
-    // } else {
-    //   res.json({ token, redirect: '/dashboard' });
-    // }
+    // generate OTP and save it to the database
+    let otp = generateOtp();
+    newUser.otpCode = otp;
+    await newUser.save();
+    //send verification Email with generated OTP
+    await sendVerificationEmail(newUser.email, newUser.FullName, otp);
+    // logger.info(newUser);
+    return res.status(200).json({
+      success: true,
+      message: `OTP successfully sent to ${newUser.email}`,
+      newUser,
+    });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ error: error.message });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    //  input
+    const { otpCode } = req.body;
+    if (!otpCode) {
+      return res
+        .status(400)
+        .json({ message: "Please provide the otp code sent" });
+    }
+    // check if user  exist
+    const user = await User.findOne({ _id: req.params.user_id });
+    if (!user) {
+      return res.status(401).json({ message: "User not Found" });
+    }
+
+    // Check if user is already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User is already verified" });
+    }
+
+    //    check if the otp is correct
+    if (user.otpCode !== otpCode) {
+      return res.status(400).json({message:"OTP is incorrect"});
+    }
+    
+    // Check if OTP has expired
+    const OtpExpirationTime = process.env.OTP_EXPIRATION_TIME;
+    if (Date.now() > OtpExpirationTime) {
+      return res.status(409).json({message:"OTP expired, please resend OTP"});
+    }
+    //create a payload and tokenize it
+    const payload = {
+      user: {
+        userId: user._id,
+        FullName: user.FullName,
+        PhoneNumber: user.PhoneNumber,
+        email: user.email,
+        role: user.role,
+      },
+    };
+    const token = createJwtToken(payload);
+    // Mark isVerified and clear OTP
+    user.isVerified = true;
+    user.otpCode = null;
+    await user.save();
+    //send welcome email
+    await sendWelcomeEmail(user.email,user.FullName);
+    // success response
+    logger.info(user._doc);
+    return res.status(200).json({
+      success: true,
+      message: "OTP successfully verified",
+      user,
+      token,
+    });
+  } catch (error) {
+    return res.status(503).json({
+      error: error.message,
+      message: "An error occurred during OTP verification",
+    });
   }
 };
 
@@ -76,16 +133,11 @@ export const login = async (req, res) => {
       FullName: user.FullName,
       PhoneNumber: user.PhoneNumber,
       email: user.email,
-      role: user.role, 
+      role: user.role,
     };
     const token = createJwtToken(payload);
 
-    res.status(201).json({ message: "User login successfully", token });
-    // if (user.role === 'admin') {
-    //   res.redirect('/admin-dashboard');
-    // } else {
-    //   res.redirect('/dashboard');
-    // }
+    return res.status(201).json({ message: "User login successfully", token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
@@ -98,17 +150,20 @@ export const forgetPassword = async (req, res) => {
     const { email } = req.body;
     // Validate input
     if (!email) {
-      res.status(400).json("Invalid email");
+      res.status(400).json({message:"Invalid email"});
       return;
     }
     // Check if user exist
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(400).json("User doesn't Exist");
+      res.status(400).json({message:"User doesn't Exist"});
       return;
     }
     // Generate token and resetLink
-    const resetToken = createJwtToken({ userId: user._id }, { expiresIn: "5m" });
+    const resetToken = createJwtToken(
+      { userId: user._id },
+      { expiresIn: "5m" }
+    );
     if (!resetToken) {
       return res
         .status(500)
@@ -119,41 +174,12 @@ export const forgetPassword = async (req, res) => {
     // Save resetLink
     user.resetLinkToken = resetToken;
     await user.save();
-    // Send resetLink using nodemailer
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 465,
-      auth: {
-        user: process.env.EMAIL_,
-        pass: process.env.PASSWORD_,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_,
-      to: email,
-      subject: "Forgot password reset link",
-      text: resetLink,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log("Email error application", error.message);
-      } else {
-        console.log(
-          `${new Date().toLocaleString()} - Email sent successfully:` +
-            info.response
-        );
-      }
-    });
-    res
-      .status(200)
-      .json({ message: "Your Password Reset link has been sent to your mail" });
-    return;
+    // Send email
+   await sendFgPasswordLink(email,resetLink);
+   return res.status(200).json({ message: "Your Password Reset link has been sent to your mail" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
     console.log(error.message);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -174,7 +200,9 @@ export const resetPassword = async (req, res, next) => {
       // Find user by resetLinkToken
       const user = await User.findOne({ resetLinkToken });
       if (!user) {
-        return res.status(400).json({ error: "User with this reset-link doesn't exist" });
+        return res
+          .status(400)
+          .json({ error: "User with this reset-link doesn't exist" });
       }
 
       // Update user's password and resetLinkToken
@@ -182,39 +210,16 @@ export const resetPassword = async (req, res, next) => {
       user.resetLinkToken = null;
       await user.save();
 
-      // Send email with the new password
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 465,
-        auth: {
-          user: process.env.EMAIL_,
-          pass: process.env.PASSWORD_,
-        },
-      });
-
-      const mailOptions = {
-        from: process.env.EMAIL_,
-        to: user.email,
-        subject: "Your Password has been updated",
-        html: `<h2>Here's your new password</h2><p>New password: ${newPass}</p>`,
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error.message);
-        } else {
-          console.log("Email sent: " + info.accepted);
-        }
-      });
-
-      return res.status(200).json({ message: "User password reset successfully" });
+      // Send email
+      await sendResetPassConfirmation(user.email,user.FullName);
+      return res
+        .status(200)
+        .json({ message: "User password reset successfully" });
     } else {
       return res.status(401).json({ error: "Authentication error" });
     }
   } catch (error) {
     console.log(error);
-    next({error:"Server error"});
+    next({ error: "Server error" });
   }
 };
-
