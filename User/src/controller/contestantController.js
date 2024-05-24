@@ -1,14 +1,18 @@
+import Video from "../models/videos.js";
+import { createJwtToken } from "../middleware/token.js";
 import Contestant from "../models/contestant.js";
 import cloudinary from "../utils/cloudinary.js";
+import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
+import generateOtp from "../utils/otpGenerator.js";
 
 // register contestant
 export const createContestant = async (req, res) => {
     try {
-      const { name,age,sex,hobby} = req.body;
+      const { name,email,age,sex,hobby,password} = req.body;
       
       // Validate input
-      if (!(name||age||sex||hobby)) {
-        return res.status(400).json({ error: "Please provide a name" });
+      if (!(name||email||age||sex||hobby||password)) {
+        return res.status(400).json({ error: "Please input all fields" });
       }
   
       if (!req.files || req.files.length === 0) {
@@ -16,9 +20,9 @@ export const createContestant = async (req, res) => {
       }
   
       // Check if contestant already exists
-      const existingContestant = await Contestant.findOne({ name });
+      const existingContestant = await Contestant.findOne({ email });
       if (existingContestant) {
-        return res.status(409).json({ message: "Contestant with this name already exists." });
+        return res.status(409).json({ message: "Contestant with this email already exists." });
       }
   
       // Upload images to cloudinary
@@ -35,22 +39,232 @@ export const createContestant = async (req, res) => {
       // Save new contestant to the database
       const contestant = await Contestant.create({
         name,
+        email,
         age,
         sex,
         hobby,
+        password,
         image: results.map((result) => result.imageUrl), // Use results instead of result
       });
-  
-      res.status(201).json({ message: "Contestant created successfully", contestant });
+  // generate OTP and save it to the database
+  let otp = generateOtp();
+  const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
+  contestant.otpCode = otp;
+  contestant.otpExpirationTime = otpExpirationTime;
+  await contestant.save();
+  //send verification Email with generated OTP
+  await sendVerificationEmail(contestant.email, contestant.name, otp);
+      res.status(201).json({ message: `OTP successfully sent to ${contestant.email}`, contestant });
     } catch (error) {
       console.error("Error in creating contestant", error);
       res.status(500).json({ error: "Server Error" });
     }
   };
-
-//   verify the otp sent
-
+ 
+  // verify the otp
+  export const verifyOtp = async (req, res) => {
+    try {
+      //  input
+      const { otpCode } = req.body;
+      if (!otpCode) {
+        return res
+          .status(400)
+          .json({ message: "Please provide the otp code sent" });
+      }
+      // check if user  exist
+      const contestant = await Contestant.findById({ _id: req.params.contestant_id });
+      if (!contestant) {
+        return res.status(404).json({ message: "Contestant not Found" });
+      }
   
+      // Check if user is already verified
+      if (contestant.isVerified) {
+        return res.status(409).json({ message: "Contestant is already verified" });
+      }
+  
+      //    check if the otp is correct
+      if (contestant.otpCode !== otpCode) {
+        return res.status(401).json({message:"OTP is incorrect"});
+      }
+      
+      // Check if OTP has expired
+      if (Date.now() > new Date(contestant.otpExpirationTime).getTime()) {
+        return res.status(409).json({ message: 'OTP expired, please resend OTP' });
+      };
+      //create a payload and tokenize it
+      const payload = {
+        contestant: {
+          contestantId: contestant._id,
+          name: contestant.name,
+          email: contestant.email,
+        },
+      };
+      const token = createJwtToken(payload);
+      // Mark isVerified and clear OTP
+      contestant.isVerified = true;
+      contestant.otpCode = null;
+      contestant.otpExpirationTime = null;
+      await contestant.save();
+      //send welcome email
+      await sendWelcomeEmail(contestant.email,contestant.name);
+      // success response
+      // logger.info(user._doc);
+      return res.status(200).json({
+        success: true,
+        message: "OTP successfully verified",
+        contestant,
+        token,
+      });
+    } catch (error) {
+      return res.status(503).json({
+        error: error.message,
+        message: "An error occurred during OTP verification",
+      });
+    }
+  };
+
+  export const resendOtp = async (req, res) => {
+  try {
+    const { contestantId } = req.body;
+
+    const contestant = await Contestant.findById(contestantId);
+    if (!contestant) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate a new OTP code
+    const otpCode = generateOtp(); // Assume you have a function to generate OTP code
+    // Set expiration time to 5 minutes from now
+    const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
+
+    // Update user document with new OTP code and expiration time
+    contestant.otpCode = otpCode;
+    contestant.otpExpirationTime = otpExpirationTime;
+    await contestant.save();
+
+    // Send email with new OTP
+    await sendVerificationEmail(contestant.email, contestant.name, otpCode);
+
+    return res.status(200).json({ message: 'OTP resent successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'An error occurred while resending OTP', error: error.message });
+  }
+};
+
+  export const login = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      // validate input
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ message: "Please provide an email and password" });
+      }
+      // find the user by their email address
+      const contestant = await Contestant.findOne({ email });
+  
+      if (!contestant) {
+        return res.status(401).json({ message: "Invalid email" });
+      }
+  
+      const isPasswordValid = await contestant.comparePassword(password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      //  Create JWT payload and sign the token
+      const payload = {
+        contestantId: contestant._id,
+        name: contestant.name,
+        email: contestant.email,
+      };
+      const token = createJwtToken(payload);
+  
+      return res.status(201).json({ message: "Contestant login successfully", token });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: error.message });
+    }
+  };
+
+  // forgot password
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    // Validate input
+    if (!email) {
+      res.status(400).json({message:"Invalid email"});
+      return;
+    }
+    // Check if user exist
+    const contestant = await Contestant.findOne({ email });
+    if (!contestant) {
+      res.status(404).json({message:"Contestant doesn't Exist"});
+      return;
+    }
+    // Generate token and resetLink
+    const resetToken = createJwtToken(
+      { contestantId: contestant._id },
+      { expiresIn: "5m" }
+    );
+    if (!resetToken) {
+      return res
+        .status(409)
+        .json({ message: "An error occurred,Please try again later" });
+    }
+    const resetLink = `http://localhost:2024/api/reset-password/:${resetToken}`;
+
+    // Save resetLink
+    contestant.resetLinkToken = resetToken;
+    await contestant.save();
+    // Send email
+   await sendFgPasswordLink(email,resetLink);
+   return res.status(200).json({ message: "Your Password Reset link has been sent to your mail" });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// reset password
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { newPass, resetLinkToken } = req.body;
+    if (resetLinkToken) {
+      // Verify token
+      const decodedToken = verifyJwtToken(resetLinkToken, next);
+
+      if (!decodedToken) {
+        return res.status(401).json({
+          error: "Incorrect Token or it's expired.",
+        });
+      }
+
+      // Find user by resetLinkToken
+      const contestant = await Contestant.findOne({ resetLinkToken });
+      if (!contestant) {
+        return res
+          .status(404)
+          .json({ error: "Contestant with this reset-link doesn't exist" });
+      }
+
+      // Update user's password and resetLinkToken
+      contestant.password = newPass;
+      contestant.resetLinkToken = null;
+      await user.save();
+
+      // Send email
+      await sendResetPassConfirmation(contestant.email,contestant.name);
+      return res
+        .status(200)
+        .json({ message: "Contestant password reset successfully" });
+    } else {
+      return res.status(401).json({ error: "Authentication error" });
+    }
+  } catch (error) {
+    console.log(error);
+    next({ error: "Server error" });
+  }
+};
 
 //   Get all contestant
 export const getAllContestants = async (req, res) => {
@@ -81,5 +295,109 @@ export const getContestantByIdOrName = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).send("Server Error");
+  }
+};
+
+export const updateContestant = async (req, res) => {
+  try {
+    const contestant = await Contestant.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!contestant) {
+      return res.status(404).json({
+        success: false,
+        message: "Contestant not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Contestant updated successfully",
+      contestant,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteContestant = async (req, res) => {
+  try {
+    const contestant = await Contestant.findById(req.params.id);
+    if (!contestant) {
+      return res.status(404).json({
+        success: false,
+        message: "Contestant not found",
+      });
+    }
+
+    // Delete the associated video
+    await Video.deleteOne({ contestant: contestant._id });
+
+    // Delete the contestant
+    await contestant.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Contestant and associated video deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// upload video content
+export const uploadVideo = async (req, res) => {
+  try {
+    const contestantId = req.contestant;
+
+    // Find the contestant by ID
+    const contestant = await Contestant.findById(contestantId);
+    
+    if (!contestant) {
+      return res.status(404).json({ error: "Contestant not found" });
+    }
+
+    const { title, description } = req.body;
+
+    // Validate input fields
+    if (!title || !description) {
+      return res.status(400).json({ message: "Please input all fields" });
+    }
+
+    // Check if the contestant has already posted the video (assuming you want to limit one video per contestant)
+    const existingVideo = await Video.findOne({ contestant: contestantId });
+    if (existingVideo) {
+      return res.status(400).json({ message: "Contestant has already uploaded a video" });
+    };
+
+     // Ensure the file is uploaded
+     if (!req.file) {
+      return res.status(400).json({ message: "No video file uploaded" });
+    }
+
+    // Upload the video to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, { resource_type: "video" });
+
+    // Save the video to the database
+    const video = await Video.create({
+      title,
+      description,
+      contestant: contestantId,
+      VideoUrl: result.secure_url,
+    });
+
+    // Respond with the created video
+    return res.status(201).json({
+      success: true,
+      message: "Video uploaded successfully",
+      video
+    });
+  } catch (error) {
+    console.error("Error uploading video:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };

@@ -1,4 +1,4 @@
-import { verifyJwtToken } from "./token.js";
+import { verifyContestantToken, verifyJwtToken } from "./token.js";
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -6,7 +6,7 @@ const authenticateToken = async (req, res, next) => {
     const header = req.headers.authorization;
 
     if (!header) {
-      next({ status: 403, message: "auth header is missing" });
+      next({ status: 403, message: "Auth header is missing" });
       return;
     }
 
@@ -14,18 +14,36 @@ const authenticateToken = async (req, res, next) => {
     const token = header.split("Bearer ")[1];
     
     if (!token) {
-      next({ status: 403, message: "auth token is missing" });
+      next({ status: 403, message: "Auth token is missing" });
       return;
     }
-    // Decode the token to get the user ID
-    const decoded = verifyJwtToken(token);
 
-     // Check if userId is available
-     if (!decoded) {
-       return next({ status: 403, message: "incorrect token" });
-     }
+    let decodedUser, decodedContestant;
 
-    req.user = decoded;
+    try {
+      decodedUser = verifyJwtToken(token);
+    } catch (error) {
+      decodedUser = null;
+    }
+
+    try {
+      decodedContestant = verifyContestantToken(token);
+    } catch (error) {
+      decodedContestant = null;
+    }
+
+    // If neither userId nor contestantId is available, the token is invalid
+    if (!decodedUser && !decodedContestant) {
+      return next({ status: 403, message: "Invalid token" });
+    }
+
+    if (decodedUser) {
+      req.user = decodedUser;
+    }
+
+    if (decodedContestant) {
+      req.contestant = decodedContestant;
+    }
 
     next();
   } catch (err) {

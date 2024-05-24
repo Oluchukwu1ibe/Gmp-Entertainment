@@ -1,7 +1,6 @@
 import User from "../models/User.js";
 import { createJwtToken, verifyJwtToken } from "../middleware/token.js";
 import _ from "lodash";
-import nodemailer from "nodemailer";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
 import logger from "../utils/log/logger.js";
@@ -28,7 +27,9 @@ export const register = async (req, res) => {
     });
     // generate OTP and save it to the database
     let otp = generateOtp();
+    const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
     newUser.otpCode = otp;
+    newUser.otpExpirationTime = otpExpirationTime;
     await newUser.save();
     //send verification Email with generated OTP
     await sendVerificationEmail(newUser.email, newUser.FullName, otp);
@@ -54,7 +55,7 @@ export const verifyOtp = async (req, res) => {
         .json({ message: "Please provide the otp code sent" });
     }
     // check if user  exist
-    const user = await User.findOne({ _id: req.params.user_id });
+    const user = await User.findById({ _id: req.params.user_id });
     if (!user) {
       return res.status(401).json({ message: "User not Found" });
     }
@@ -70,10 +71,9 @@ export const verifyOtp = async (req, res) => {
     }
     
     // Check if OTP has expired
-    const OtpExpirationTime = process.env.OTP_EXPIRATION_TIME;
-    if (Date.now() > OtpExpirationTime) {
-      return res.status(409).json({message:"OTP expired, please resend OTP"});
-    }
+    if (Date.now() > new Date(user.otpExpirationTime).getTime()) {
+      return res.status(409).json({ message: 'OTP expired, please resend OTP' });
+    };
     //create a payload and tokenize it
     const payload = {
       user: {
@@ -88,11 +88,12 @@ export const verifyOtp = async (req, res) => {
     // Mark isVerified and clear OTP
     user.isVerified = true;
     user.otpCode = null;
+    user.otpExpirationTime = null;
     await user.save();
     //send welcome email
     await sendWelcomeEmail(user.email,user.FullName);
     // success response
-    logger.info(user._doc);
+    // logger.info(user._doc);
     return res.status(200).json({
       success: true,
       message: "OTP successfully verified",
@@ -106,6 +107,35 @@ export const verifyOtp = async (req, res) => {
     });
   }
 };
+
+export const resendOtp = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate a new OTP code
+    const otpCode = generateOtp(); // Assume you have a function to generate OTP code
+    // Set expiration time to 5 minutes from now
+    const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
+
+    // Update user document with new OTP code and expiration time
+    user.otpCode = otpCode;
+    user.otpExpirationTime = otpExpirationTime;
+    await user.save();
+
+    // Send email with new OTP
+    await sendVerificationEmail(user.email, user.FullName, otpCode);
+
+    return res.status(200).json({ message: 'OTP resent successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'An error occurred while resending OTP', error: error.message });
+  }
+};
+
 
 export const login = async (req, res) => {
   try {
@@ -221,5 +251,78 @@ export const resetPassword = async (req, res, next) => {
   } catch (error) {
     console.log(error);
     next({ error: "Server error" });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json(users);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+};
+
+export const getUserByIdOrName = async (req, res) => {
+  let query = {};
+  if (req.params.id) {
+    query._id = req.params.id;
+  } else if (req.params.name) {
+    query.name = req.params.name;
+  }
+
+  try {
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Not found" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      contestant,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
