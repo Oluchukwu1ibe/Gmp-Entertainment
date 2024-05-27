@@ -4,6 +4,7 @@ import _ from "lodash";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
 import logger from "../utils/log/logger.js";
+import Vote from "../models/Vote.js";
 
 export const register = async (req, res) => {
   try {
@@ -76,13 +77,11 @@ export const verifyOtp = async (req, res) => {
     };
     //create a payload and tokenize it
     const payload = {
-      user: {
         userId: user._id,
         FullName: user.FullName,
         PhoneNumber: user.PhoneNumber,
         email: user.email,
         role: user.role,
-      },
     };
     const token = createJwtToken(payload);
     // Mark isVerified and clear OTP
@@ -125,6 +124,7 @@ export const resendOtp = async (req, res) => {
     // Update user document with new OTP code and expiration time
     user.otpCode = otpCode;
     user.otpExpirationTime = otpExpirationTime;
+    user.isVerified=false;
     await user.save();
 
     // Send email with new OTP
@@ -308,16 +308,22 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
+    // Find and delete the user
     const user = await User.findByIdAndDelete(req.params.id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
+
+    // If the user is deleted successfully, delete their associated vote(s)
+    await Vote.deleteMany({ user: user._id });
+
     res.status(200).json({
       success: true,
-      message: "User deleted successfully",
+      message: "User and associated votes deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
