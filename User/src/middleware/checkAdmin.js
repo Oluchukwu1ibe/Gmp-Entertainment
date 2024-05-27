@@ -32,11 +32,11 @@ export default async (req, res, next) => {
   
      res.locals.user = user;
       
-      if (user.role !=="Admin") {
+      if (user.role !=="Contestant") {
         return res.status(401).json({ message: "Access deny for normal user" });
       }
     
-      if (user.role === "Admin") {
+      if (user.role === "Contestant") {
         return next();
       }
     } catch (error) {

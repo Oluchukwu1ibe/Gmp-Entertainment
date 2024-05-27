@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import { createJwtToken, verifyJwtToken } from "../middleware/token.js";
+import { createJwtToken, verifyUserToken } from "../middleware/token.js";
 import _ from "lodash";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
@@ -219,7 +219,7 @@ export const resetPassword = async (req, res, next) => {
     const { newPass, resetLinkToken } = req.body;
     if (resetLinkToken) {
       // Verify token
-      const decodedToken = verifyJwtToken(resetLinkToken, next);
+      const decodedToken = verifyUserToken(resetLinkToken, next);
 
       if (!decodedToken) {
         return res.status(401).json({

@@ -5,7 +5,7 @@ export const createJwtToken = (payload) => {
   return token;
 };
 
-export const verifyJwtToken = (token) => {
+export const verifyUserToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.TOKEN_KEY);
     if (!decoded.userId) {
@@ -13,7 +13,7 @@ export const verifyJwtToken = (token) => {
     }
     return decoded.userId;
   } catch (error) {
-    throw new Error('Invalid token');
+    throw error; 
   }
 };
 
@@ -25,7 +25,7 @@ export const verifyContestantToken = (token) => {
     }
     return decoded.contestantId;
   } catch (error) {
-    throw new Error('Invalid token');
+    throw error; 
   }
 };
 

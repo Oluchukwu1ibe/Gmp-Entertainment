@@ -1,11 +1,11 @@
 import express from 'express';
 import { createVote,getVotes } from '../controller/voteController.js';
-import authenticateToken from '../middleware/checkAuth.js';
+import { authenticateUserToken } from '../middleware/checkAuth.js';
 
 const router = express.Router();
 
 // Create a new vote
-router.post('/vote',authenticateToken,createVote);
+router.post('/vote',authenticateUserToken,createVote);
 
 // Get all votes
 router.get('/', getVotes);

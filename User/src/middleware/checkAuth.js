@@ -1,54 +1,60 @@
-import { verifyContestantToken, verifyJwtToken } from "./token.js";
+import { verifyContestantToken, verifyUserToken } from "./token.js";
 
-const authenticateToken = async (req, res, next) => {
+export const authenticateUserToken = async (req, res, next) => {
   try {
-    // Check for auth header from client
     const header = req.headers.authorization;
 
     if (!header) {
-      next({ status: 403, message: "Auth header is missing" });
-      return;
+      return res.status(403).json({ error: "Auth header is missing" });
     }
 
-    // Verify auth token
     const token = header.split("Bearer ")[1];
     
     if (!token) {
-      next({ status: 403, message: "Auth token is missing" });
-      return;
-    }
-
-    let decodedUser, decodedContestant;
-
-    try {
-      decodedUser = verifyJwtToken(token);
-    } catch (error) {
-      decodedUser = null;
+      return res.status(403).json({ error: "Auth token is missing" });
     }
 
     try {
-      decodedContestant = verifyContestantToken(token);
-    } catch (error) {
-      decodedContestant = null;
-    }
-
-    // If neither userId nor contestantId is available, the token is invalid
-    if (!decodedUser && !decodedContestant) {
-      return next({ status: 403, message: "Invalid token" });
-    }
-
-    if (decodedUser) {
+      // Verify user token
+      const decodedUser = verifyUserToken(token);
       req.user = decodedUser;
+      next();
+    } catch (error) {
+      console.error("Error decoding user token:", error.message);
+      return res.status(403).json({ error: "Invalid user token, or an expired token"});
     }
-
-    if (decodedContestant) {
-      req.contestant = decodedContestant;
-    }
-
-    next();
   } catch (err) {
-    next(err);
+    console.error("Authentication error:", err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-export default authenticateToken;
+// Middleware for authenticating contestant tokens
+export const authenticateContestantToken = async (req, res, next) => {
+  try {
+    const header = req.headers.authorization;
+
+    if (!header) {
+      return res.status(403).json({ error: "Auth header is missing" });
+    }
+
+    const token = header.split("Bearer ")[1];
+    
+    if (!token) {
+      return res.status(403).json({ error: "Auth token is missing" });
+    }
+
+    try {
+      // Verify contestant token
+      const decodedContestant = verifyContestantToken(token);
+      req.contestant = decodedContestant;
+      next();
+    } catch (error) {
+      console.error("Error decoding contestant token:", error.message);
+      return res.status(403).json({ error: "Invalid contestant token,or an expired token" });
+    }
+  } catch (err) {
+    console.error("Authentication error:", err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
