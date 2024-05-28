@@ -7,17 +7,19 @@ const userSchema = new mongoose.Schema(
     FullName: {
       type: String,
       unique: true,
-      required: [true, "Please provide a Full name"],
+      required: true,
       trim: true,
     },
     PhoneNumber: {
       type: String,
       unique: true,
-      required: [true, "Please provide a valid Phone number"],
+      required: true, 
+      minLength:11,
+      maxLength:11,
     },
     password: {
       type: String,
-      required: [true, "Please provide a password"],
+      required: true,
       alphanumeric: true,
       trim: true,
       minLength: 6,
@@ -25,7 +27,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       unique: true,
-      required: [true, "Please provide a valid email address"],
+      required: true, 
       trim: true,
       lowercase: true,
     },

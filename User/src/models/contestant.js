@@ -9,13 +9,13 @@ const contestantSchema = new Schema({
   email: {
     type: String,
     unique: true,
-    required: [true, "Please provide a valid email address"],
+    required: true,
     trim: true,
     lowercase: true,
   },
   password: {
     type: String,
-    required: [true, "Please provide a password"],
+    required: true, 
     alphanumeric: true,
     trim: true,
     minLength: 6,
