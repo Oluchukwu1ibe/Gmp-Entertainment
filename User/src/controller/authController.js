@@ -8,9 +8,9 @@ import Vote from "../models/Vote.js";
 
 export const register = async (req, res) => {
   try {
-    const { FullName, PhoneNumber, password, email } = req.body;
+    const { password, email } = req.body;
     // validate the input
-    if (!FullName || !PhoneNumber || !password || !email) {
+    if ( !password || !email) {
       res.status(400).json({ error: "Input all fields" });
       return;
     }
@@ -19,16 +19,14 @@ export const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: `User with ${email} already exists` });
     }
-    // check the PhoneNumber
-    const existingPhoneNumber = await User.findOne({ PhoneNumber });
-    if (existingPhoneNumber) {
-      return res.status(400).json({ message: `User with ${PhoneNumber} already exists`});
-    }
+    // // check the PhoneNumber
+    // const existingPhoneNumber = await User.findOne({ PhoneNumber });
+    // if (existingPhoneNumber) {
+    //   return res.status(400).json({ message: `User with ${PhoneNumber} already exists`});
+    // }
 
     // if not...
     const newUser = await User.create({
-      FullName,
-      PhoneNumber,
       email,
       password,
     });
@@ -39,7 +37,7 @@ export const register = async (req, res) => {
     newUser.otpExpirationTime = otpExpirationTime;
     await newUser.save();
     //send verification Email with generated OTP
-    await sendVerificationEmail(newUser.email, newUser.FullName, otp);
+    await sendVerificationEmail(newUser.email, otp);
     // logger.info(newUser);
     return res.status(200).json({
       success: true,
@@ -84,8 +82,6 @@ export const verifyOtp = async (req, res) => {
     //create a payload and tokenize it
     const payload = {
         userId: user._id,
-        FullName: user.FullName,
-        PhoneNumber: user.PhoneNumber,
         email: user.email,
         role: user.role,
     };
@@ -96,7 +92,7 @@ export const verifyOtp = async (req, res) => {
     user.otpExpirationTime = null;
     await user.save();
     //send welcome email
-    await sendWelcomeEmail(user.email,user.FullName);
+    await sendWelcomeEmail(user.email);
     // success response
     // logger.info(user._doc);
     return res.status(200).json({
@@ -134,7 +130,7 @@ export const resendOtp = async (req, res) => {
     await user.save();
 
     // Send email with new OTP
-    await sendVerificationEmail(user.email, user.FullName, otpCode);
+    await sendVerificationEmail(user.email,otpCode);
 
     return res.status(200).json({ message: 'OTP resent successfully' });
   } catch (error) {
@@ -166,8 +162,6 @@ export const login = async (req, res) => {
     //  Create JWT payload and sign the token
     const payload = {
       userId: user._id,
-      FullName: user.FullName,
-      PhoneNumber: user.PhoneNumber,
       email: user.email,
       role: user.role,
     };
@@ -247,7 +241,7 @@ export const resetPassword = async (req, res, next) => {
       await user.save();
 
       // Send email
-      await sendResetPassConfirmation(user.email,user.FullName);
+      await sendResetPassConfirmation(user.email);
       return res
         .status(200)
         .json({ message: "User password reset successfully" });
@@ -302,7 +296,7 @@ export const updateUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User updated successfully",
-      contestant,
+      user
     });
   } catch (error) {
     res.status(400).json({

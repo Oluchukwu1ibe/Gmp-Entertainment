@@ -1,4 +1,4 @@
-const resetPasswordTemplate = (FullName)=>{
+const resetPasswordTemplate = ()=>{
     return`<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -144,7 +144,7 @@ const resetPasswordTemplate = (FullName)=>{
     <body>
         <div>
             <div class='password'>
-              <p class='hi'>Hi ${FullName}, </p>
+              <p class='hi'>Hello, </p>
               <h2>You’ve just changed your password</h2>
               <p class='confirm'>We just wanted to confirm that you’ve changed your password. If you didn't change your password. please <span style='color:#ADD565'><a href="mailto:support@getsavey.com">Contact us</a></span> right away.</p>
               <p class='confirm'>It’s important that you let us know because it helps us prevent Unauthorised persons from accessing your Savey account.</p>

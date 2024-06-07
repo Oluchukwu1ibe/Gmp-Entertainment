@@ -6,7 +6,7 @@ import resetPasswordTemplate from './templates/resetPassword-template.js';
 
 
 
-const sendVerificationEmail = async (email,FullName,otp) => {
+const sendVerificationEmail = async (email,otp) => {
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -23,7 +23,7 @@ const sendVerificationEmail = async (email,FullName,otp) => {
         from: process.env.EMAIL_,
         to: email,
         subject: "Verification OTP",
-        html: verificationTemplate(FullName,otp),
+        html: verificationTemplate(otp),
       };
       const info = await transporter.sendMail(mailOptions);
       console.log(
@@ -36,7 +36,7 @@ const sendVerificationEmail = async (email,FullName,otp) => {
     }
   };
 
-const sendWelcomeEmail = async(email,FullName)=>{
+const sendWelcomeEmail = async(email)=>{
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -53,7 +53,7 @@ const sendWelcomeEmail = async(email,FullName)=>{
       from: process.env.EMAIL_,
       to: email,
       subject: "Welcome to GMPEntertainment",
-      html: welcomeTemplate(FullName),
+      html: welcomeTemplate(),
     };
     const info = await transporter.sendMail(mailOptions);
     console.log(
@@ -97,7 +97,7 @@ const sendFgPasswordLink = async(email,resetLink)=>{
   }
 };
 
-const sendResetPassConfirmation = async(email,FullName)=>{
+const sendResetPassConfirmation = async(email)=>{
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -114,7 +114,7 @@ const sendResetPassConfirmation = async(email,FullName)=>{
       from: process.env.EMAIL_,
       to: email,
       subject: "Password Reset Successful",
-      html: resetPasswordTemplate(FullName),
+      html: resetPasswordTemplate(),
     };
     const info = await transporter.sendMail(mailOptions);
     console.log(

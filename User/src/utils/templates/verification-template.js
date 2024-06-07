@@ -1,4 +1,4 @@
-const verificationTemplate = (fullName,generateOtp) => {
+const verificationTemplate = (generateOtp) => {
     // const OTP = generateOtp(user.emailOtp);
     return `<!DOCTYPE html>
     <html lang="en">
@@ -135,7 +135,7 @@ const verificationTemplate = (fullName,generateOtp) => {
     <body>
         <div>
             <div class='email-otp'>
-                <p class='hi'>Hi ${fullName}, </p>
+                <p class='hi'>Hello, </p>
                 <h2>Verification Pin</h2>
                 <p>Please verify your email by entering this pin on the verification page</p>
                 <p class="otp">${generateOtp?.toString()}</p>

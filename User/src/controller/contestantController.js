@@ -4,20 +4,18 @@ import Contestant from "../models/contestant.js";
 import cloudinary from "../utils/cloudinary.js";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
+import contestant from "../models/contestant.js";
 
 // register contestant
 export const createContestant = async (req, res) => {
     try {
-      const { name,email,age,sex,hobby,password} = req.body;
+      const {FullName,email,password} = req.body;
       
       // Validate input
-      if (!(name||email||age||sex||hobby||password)) {
+      if (!(FullName||email||password)) {
         return res.status(400).json({ error: "Please input all fields" });
       }
   
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: "Please upload an image" });
-      }
   
       // Check if contestant already exists
       const existingContestant = await Contestant.findOne({ email });
@@ -25,26 +23,14 @@ export const createContestant = async (req, res) => {
         return res.status(409).json({ message: "Contestant with this email already exists." });
       }
   
-      // Upload images to cloudinary
-      const results = await Promise.all(
-        req.files.map(async (file) => {
-          const result = await cloudinary.uploader.upload(file.path);
-          return {
-            publicId: result.public_id,
-            imageUrl: result.secure_url,
-          };
-        })
-      );
+      
   
       // Save new contestant to the database
       const contestant = await Contestant.create({
-        name,
+        FullName,
         email,
-        age,
-        sex,
-        hobby,
         password,
-        image: results.map((result) => result.imageUrl), // Use results instead of result
+        // image: results.map((result) => result.imageUrl), // Use results instead of result
       });
   // generate OTP and save it to the database
   let otp = generateOtp();
@@ -53,7 +39,7 @@ export const createContestant = async (req, res) => {
   contestant.otpExpirationTime = otpExpirationTime;
   await contestant.save();
   //send verification Email with generated OTP
-  await sendVerificationEmail(contestant.email, contestant.name, otp);
+  await sendVerificationEmail(contestant.email, otp);
       res.status(201).json({ message: `OTP successfully sent to ${contestant.email}`, contestant });
     } catch (error) {
       console.error("Error in creating contestant", error);
@@ -93,11 +79,9 @@ export const createContestant = async (req, res) => {
       };
       //create a payload and tokenize it
       const payload = {
-        contestant: {
-          contestantId: contestant._id,
-          name: contestant.name,
-          email: contestant.email,
-        },
+        contestantId: contestant._id,
+        FullName: contestant.FullName,
+        email: contestant.email,
       };
       const token = createJwtToken(payload);
       // Mark isVerified and clear OTP
@@ -106,7 +90,7 @@ export const createContestant = async (req, res) => {
       contestant.otpExpirationTime = null;
       await contestant.save();
       //send welcome email
-      await sendWelcomeEmail(contestant.email,contestant.name);
+      await sendWelcomeEmail(contestant.email);
       // success response
       // logger.info(user._doc);
       return res.status(200).json({
@@ -143,7 +127,7 @@ export const createContestant = async (req, res) => {
     await contestant.save();
 
     // Send email with new OTP
-    await sendVerificationEmail(contestant.email, contestant.name, otpCode);
+    await sendVerificationEmail(contestant.email, otpCode);
 
     return res.status(200).json({ message: 'OTP resent successfully' });
   } catch (error) {
@@ -174,7 +158,7 @@ export const createContestant = async (req, res) => {
       //  Create JWT payload and sign the token
       const payload = {
         contestantId: contestant._id,
-        name: contestant.name,
+        FullName: contestant.FullName,
         email: contestant.email,
       };
       const token = createJwtToken(payload);
@@ -253,7 +237,7 @@ export const resetPassword = async (req, res, next) => {
       await user.save();
 
       // Send email
-      await sendResetPassConfirmation(contestant.email,contestant.name);
+      await sendResetPassConfirmation(contestant.email);
       return res
         .status(200)
         .json({ message: "Contestant password reset successfully" });
@@ -347,7 +331,41 @@ export const deleteContestant = async (req, res) => {
     });
   }
 };
+// upload image
+export const uploadImage = async (req, res) => {
+  try {
+    const contestantId = req.contestant;
 
+    // Validate contestantId
+    if (!contestantId) {
+      return res.status(400).json({ error: "Contestant ID is required" });
+    }
+
+    // Find the contestant by ID
+    const contestant = await Contestant.findById(contestantId);
+
+    if (!contestant) {
+      return res.status(404).json({ error: "Contestant not found" });
+    }
+
+    // Check if file is uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "Please upload an image" });
+    }
+
+    // Upload image to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, { resource_type: "image" });
+
+    // Save the image URL in the contestant database
+    contestant.image = result.secure_url;
+    await contestant.save();
+
+    res.status(200).json({ message: "Image uploaded successfully",contestant});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while uploading the image" });
+  }
+};
 
 // upload video content
 export const uploadVideo = async (req, res) => {
