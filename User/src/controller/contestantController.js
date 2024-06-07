@@ -1,5 +1,5 @@
 import Video from "../models/videos.js";
-import { createJwtToken } from "../middleware/token.js";
+import { createJwtToken, verifyContestantToken } from "../middleware/token.js";
 import Contestant from "../models/contestant.js";
 import cloudinary from "../utils/cloudinary.js";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
@@ -215,7 +215,7 @@ export const resetPassword = async (req, res, next) => {
     const { newPass, resetLinkToken } = req.body;
     if (resetLinkToken) {
       // Verify token
-      const decodedToken = verifyJwtToken(resetLinkToken, next);
+      const decodedToken = verifyContestantToken(resetLinkToken, next);
 
       if (!decodedToken) {
         return res.status(401).json({
@@ -234,7 +234,7 @@ export const resetPassword = async (req, res, next) => {
       // Update user's password and resetLinkToken
       contestant.password = newPass;
       contestant.resetLinkToken = null;
-      await user.save();
+      await contestant.save();
 
       // Send email
       await sendResetPassConfirmation(contestant.email);
