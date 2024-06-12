@@ -7,7 +7,7 @@ const videoSchema = new Schema({
     ref: 'Contestant',
     required: true
   },
-  VideoUrl: {
+  Video: {
     type: String,
     required: true,
     trim: true

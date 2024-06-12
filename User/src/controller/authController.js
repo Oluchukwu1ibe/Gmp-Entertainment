@@ -284,9 +284,27 @@ export const getUserByIdOrName = async (req, res) => {
   }
 };
 
+export const UserProfile = async(req,res)=>{
+  try{
+    const userId = req.user;
+  
+      // Find the contestant by ID
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  res.status(200).json({message:'User Profile'},user);
+  }catch(error){
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
+  }
+  };
+
 export const updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const userId = req.user;
+    const user = await User.findByIdAndUpdate(userId, req.body, { new: true, runValidators: true });
     if (!user) {
       return res.status(404).json({
         success: false,

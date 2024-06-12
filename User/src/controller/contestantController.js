@@ -4,7 +4,6 @@ import Contestant from "../models/contestant.js";
 import cloudinary from "../utils/cloudinary.js";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
-import contestant from "../models/contestant.js";
 
 // register contestant
 export const createContestant = async (req, res) => {
@@ -245,8 +244,8 @@ export const resetPassword = async (req, res, next) => {
       return res.status(401).json({ error: "Authentication error" });
     }
   } catch (error) {
-    console.log(error);
-    next({ error: "Server error" });
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -255,9 +254,9 @@ export const getAllContestants = async (req, res) => {
   try {
     const contestants = await Contestant.find();
     res.status(200).json(contestants);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Server Error");
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -276,33 +275,60 @@ export const getContestantByIdOrName = async (req, res) => {
       return res.status(404).json({ error: "Not found" });
     }
     res.status(200).json(contestant);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Server Error");
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
   }
 };
 
+// profile
+export const contestantProfile = async(req,res)=>{
+try{
+  const contestantId = req.contestant;
+
+    // Find the contestant by ID
+    const contestant = await Contestant.findById(contestantId);
+    
+    if (!contestant) {
+      return res.status(404).json({ error: "Contestant not found" });
+    }
+res.status(200).json({message:'Contestant Profile'},contestant);
+}catch(error){
+  console.log(error.message);
+  return res.status(500).json({ message: error.message });
+}
+};
+// update profile
 export const updateContestant = async (req, res) => {
   try {
-    const contestant = await Contestant.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const contestantId = req.contestant;
+    const updatedData = req.body;
+
+    const contestant = await Contestant.findByIdAndUpdate(contestantId, updatedData, {
+      new: true,
+      runValidators: true,
+    });
+
     if (!contestant) {
       return res.status(404).json({
         success: false,
         message: "Contestant not found",
       });
     }
+
     res.status(200).json({
       success: true,
       message: "Contestant updated successfully",
       contestant,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
 
 export const deleteContestant = async (req, res) => {
   try {
@@ -405,7 +431,7 @@ export const uploadVideo = async (req, res) => {
       title,
       description,
       contestant: contestantId,
-      VideoUrl: result.secure_url,
+      Video: result.secure_url,
     });
 
     // Respond with the created video
