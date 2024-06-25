@@ -69,7 +69,7 @@ export const createContestant = async (req, res) => {
   
       //    check if the otp is correct
       if (contestant.otpCode !== otpCode) {
-        return res.status(401).json({message:"OTP is incorrect"});
+        return res.status(400).json({message:"OTP is incorrect"});
       }
       
       // Check if OTP has expired
@@ -154,6 +154,11 @@ export const createContestant = async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid password" });
       }
+      // check if the otp has been verified and if not delete the contestant credentials
+if(contestant.isVerified = "false"){
+  await Contestant.findByIdAndDelete(contestant.id);
+  return res.status(403).json({ message: "Please verify your email first" });
+};
       //  Create JWT payload and sign the token
       const payload = {
         contestantId: contestant._id,
@@ -445,3 +450,36 @@ export const uploadVideo = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// delete video
+
+export const deleteVideo =async(req,res)=>{
+  try {
+    const contestantId = req.contestant;
+
+    // Validate contestantId
+    if (!contestantId) {
+      return res.status(400).json({ error: "Contestant ID is required" });
+    }
+
+    // Find the contestant by ID
+    const contestant = await Contestant.findById(contestantId);
+    if (!contestant) {
+      return res.status(404).json({ error: "Contestant not found" });
+    }
+        // Find the video associated with the contestant
+        const video = await Video.findOne({ contestant });
+        
+        if (!video) {
+          return res.status(404).json({ error: "Video not found" });
+          }
+    
+        // Delete the video
+        await Video.deleteOne({ _id: video._id });
+    
+        return res.status(200).json({ message: "Video deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting video:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+}

@@ -62,12 +62,12 @@ export const verifyOtp = async (req, res) => {
     // check if user  exist
     const user = await User.findById({ _id: req.params.user_id });
     if (!user) {
-      return res.status(401).json({ message: "User not Found" });
+      return res.status(404).json({ message: "User not Found" });
     }
 
     // Check if user is already verified
     if (user.isVerified) {
-      return res.status(400).json({ message: "User is already verified" });
+      return res.status(409).json({ message: "User is already verified" });
     }
 
     //    check if the otp is correct
@@ -152,13 +152,19 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid email" });
+      return res.status(404).json({ message: "Invalid email" });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
     }
+// check if the otp has been verified and if not delete the user credentials
+if(user.isVerified = "false"){
+  await User.findByIdAndDelete(user.id);
+  return res.status(403).json({ message: "Please verify your email first" });
+};
+
     //  Create JWT payload and sign the token
     const payload = {
       userId: user._id,
@@ -186,7 +192,7 @@ export const forgetPassword = async (req, res) => {
     // Check if user exist
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(400).json({message:"User doesn't Exist"});
+      res.status(404).json({message:"User doesn't Exist"});
       return;
     }
     // Generate token and resetLink

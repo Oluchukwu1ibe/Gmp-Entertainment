@@ -1,5 +1,5 @@
 import express from 'express';
-import { createContestant,login, deleteContestant, forgetPassword, getAllContestants, getContestantByIdOrName, resendOtp, resetPassword, updateContestant, uploadVideo, verifyOtp, uploadImage, contestantProfile } from '../controller/contestantController.js';
+import { createContestant,login, deleteContestant, forgetPassword, getAllContestants, getContestantByIdOrName, resendOtp, resetPassword, updateContestant, uploadVideo, verifyOtp, uploadImage, contestantProfile, deleteVideo } from '../controller/contestantController.js';
 import upload from "../utils/multer.js";
 import { authenticateContestantToken } from '../middleware/checkAuth.js';
 
@@ -18,5 +18,6 @@ router.delete('/contestants/:id', deleteContestant);
 router.get('/profile',authenticateContestantToken,contestantProfile);
 router.post('/uploadImage',upload.single('image'),authenticateContestantToken,uploadImage);
 router.post('/uploadVideo', upload.single('Video'), authenticateContestantToken, uploadVideo);
+router.delete('/deleteVideo',authenticateContestantToken,deleteVideo);
 
 export default router;

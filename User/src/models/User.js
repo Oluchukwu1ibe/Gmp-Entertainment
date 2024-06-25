@@ -6,12 +6,10 @@ const userSchema = new mongoose.Schema(
   {
     Name: {
       type: String,
-      unique: true,
       trim: true,
     },
     DisplayName: {
       type: String,
-      unique: true,
       trim: true,
     },
     location: {
