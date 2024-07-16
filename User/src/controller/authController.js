@@ -160,7 +160,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 // check if the otp has been verified and if not delete the user credentials
-if(user.isVerified = "false"){
+if(!user.isVerified){
   await User.findByIdAndDelete(user.id);
   return res.status(403).json({ message: "Please verify your email first" });
 };
