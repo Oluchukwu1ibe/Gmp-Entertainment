@@ -152,7 +152,7 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "Invalid email" });
+      return res.status(404).json({ message: "Email not Found" });
     }
 
     const isPasswordValid = await user.comparePassword(password);
@@ -266,7 +266,7 @@ export const getAllUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server Error");
+    res.status(500).json("Server Error");
   }
 };
 
@@ -286,7 +286,7 @@ export const getUserByIdOrName = async (req, res) => {
     res.status(200).json(user);
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server Error");
+    res.status(500).json("Server Error");
   }
 };
 

@@ -4,6 +4,7 @@ import connectDB from "./config/database.js";
 import  authRoute from "./routes/authRoute.js";
 import voteRoute from "./routes/voteRoute.js";
 import contestantRoute from "./routes/contestantRoute.js";
+import commentRoute from "./routes/commentRoute.js";
 import  http from "http";
 import axios from "axios";
 import cors from "cors";
@@ -24,6 +25,7 @@ app.use(cors());
 app.use("/api", authRoute);
 app.use("/api/vote",voteRoute);
 app.use("/api/contestant",contestantRoute);
+app.use("/api/comment",commentRoute);
 
 app.get("/", (req, res) => {
   res.send("Welcome to our streaming Platform");
