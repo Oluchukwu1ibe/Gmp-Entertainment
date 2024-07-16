@@ -7,7 +7,7 @@ import contestantRoute from "./routes/contestantRoute.js";
 import commentRoute from "./routes/commentRoute.js";
 import  http from "http";
 import axios from "axios";
-import cors from "cors";
+// import cors from "cors";
 
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-app.use(cors());
+// app.use(cors());
 app.use("/api", authRoute);
 app.use("/api/vote",voteRoute);
 app.use("/api/contestant",contestantRoute);
