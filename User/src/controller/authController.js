@@ -294,7 +294,7 @@ export const UserProfile = async(req,res)=>{
   try{
     const userId = req.user;
   
-      // Find the contestant by ID
+      // Find the user by ID
       const user = await User.findById(userId);
       
       if (!user) {
