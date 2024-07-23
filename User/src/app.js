@@ -21,13 +21,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// const corsOptions = { 
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   credentials: true 
-// };
+const corsOptions = { 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true 
+};
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use("/api", authRoute);
 app.use("/api/vote",voteRoute);
 app.use("/api/contestant",contestantRoute);
