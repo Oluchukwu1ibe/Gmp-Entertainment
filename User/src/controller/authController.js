@@ -60,7 +60,7 @@ export const verifyOtp = async (req, res) => {
         .json({ message: "Please provide the otp code sent" });
     }
     // check if user  exist
-    const user = await User.findById({ _id: req.params.user_id });
+    const user = await User.findById(req.params.user_id);
     if (!user) {
       return res.status(404).json({ message: "User not Found" });
     }
