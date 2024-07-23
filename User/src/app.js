@@ -22,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 const corsOptions = { 
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true 
