@@ -3,7 +3,7 @@ import { createJwtToken, verifyUserToken } from "../middleware/token.js";
 import _ from "lodash";
 import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
-import logger from "../utils/log/logger.js";
+import bcrypt from "bcrypt";
 import Vote from "../models/Vote.js";
 
 export const register = async (req, res) => {
@@ -310,7 +310,13 @@ export const UserProfile = async(req,res)=>{
 export const updateUser = async (req, res) => {
   try {
     const userId = req.user;
-    const user = await User.findByIdAndUpdate(userId, req.body, { new: true, runValidators: true });
+    const {data}=req.body;
+    if (!data) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all fields" });
+    }
+    const user = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -354,5 +360,35 @@ export const deleteUser = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+// change password
+export const changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    const userId = req.user;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await user.comparePassword(oldPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
   }
 };

@@ -24,13 +24,10 @@ const contestantSchema = new Schema({
     type: String,
     trim: true,
   },
-  age: {
-    type: Number,
+  DOb: {
+    type: Date,
   },
   sex: {
-    type: String,
-  },
-  hobby: {
     type: String,
   },
   location: {
