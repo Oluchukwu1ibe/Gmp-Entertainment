@@ -155,7 +155,7 @@ export const createContestant = async (req, res) => {
         return res.status(401).json({ message: "Invalid password" });
       }
       // check if the otp has been verified and if not delete the contestant credentials
-if(contestant.isVerified = "false"){
+if(!contestant.isVerified){
   await Contestant.findByIdAndDelete(contestant.id);
   return res.status(403).json({ message: "Please verify your email first" });
 };
