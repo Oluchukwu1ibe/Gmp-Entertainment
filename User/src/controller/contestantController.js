@@ -10,6 +10,8 @@ import {
 } from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
 import { updateContestantSchema } from "../utils/validation.js";
+import bcrypt from "bcrypt";
+
 // register contestant
 export const createContestant = async (req, res) => {
   try {
@@ -527,5 +529,45 @@ export const deleteVideo = async (req, res) => {
   } catch (error) {
     console.error("Error deleting video:", error);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// change password
+export const changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    const contestantId = req.contestant;
+    const contestant = await Contestant.findById(contestantId);
+
+    if (!contestant) {
+      return res.status(404).json({ message: "Contestant not found" });
+    }
+
+    const isMatch = await contestant.comparePassword(oldPassword, contestant.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // Check if the new password is different from the old password
+    const isSameAsOldPassword = await bcrypt.compare(
+      newPassword,
+      contestant.password
+    );
+    if (isSameAsOldPassword) {
+      return res
+        .status(400)
+        .json({
+          message: "New password cannot be the same as the old password",
+        });
+    }
+
+    contestant.password = newPassword;
+
+    await contestant.save();
+    res.json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json(error.message,{ message: "Server error", error });
   }
 };
