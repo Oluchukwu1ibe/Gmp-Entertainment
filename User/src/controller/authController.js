@@ -1,29 +1,32 @@
 import User from "../models/User.js";
 import { createJwtToken, verifyUserToken } from "../middleware/token.js";
 import _ from "lodash";
-import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
+import {
+  sendFgPasswordLink,
+  sendResetPassConfirmation,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
 import bcrypt from "bcrypt";
 import Vote from "../models/Vote.js";
+import { updateUserSchema } from "../utils/validation.js";
 
 export const register = async (req, res) => {
   try {
     const { password, email } = req.body;
     // validate the input
-    if ( !password || !email) {
+    if (!password || !email) {
       res.status(400).json({ error: "Input all fields" });
       return;
     }
     // check if user already exist
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: `User with ${email} already exists` });
+      return res
+        .status(400)
+        .json({ message: `User with ${email} already exists` });
     }
-    // // check the PhoneNumber
-    // const existingPhoneNumber = await User.findOne({ PhoneNumber });
-    // if (existingPhoneNumber) {
-    //   return res.status(400).json({ message: `User with ${PhoneNumber} already exists`});
-    // }
 
     // if not...
     const newUser = await User.create({
@@ -72,18 +75,20 @@ export const verifyOtp = async (req, res) => {
 
     //    check if the otp is correct
     if (user.otpCode !== otpCode) {
-      return res.status(400).json({message:"OTP is incorrect"});
+      return res.status(400).json({ message: "OTP is incorrect" });
     }
-    
+
     // Check if OTP has expired
     if (Date.now() > new Date(user.otpExpirationTime).getTime()) {
-      return res.status(409).json({ message: 'OTP expired, please resend OTP' });
-    };
+      return res
+        .status(409)
+        .json({ message: "OTP expired, please resend OTP" });
+    }
     //create a payload and tokenize it
     const payload = {
-        userId: user._id,
-        email: user.email,
-        role: user.role,
+      userId: user._id,
+      email: user.email,
+      role: user.role,
     };
     const token = createJwtToken(payload);
     // Mark isVerified and clear OTP
@@ -115,7 +120,7 @@ export const resendOtp = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Generate a new OTP code
@@ -126,18 +131,22 @@ export const resendOtp = async (req, res) => {
     // Update user document with new OTP code and expiration time
     user.otpCode = otpCode;
     user.otpExpirationTime = otpExpirationTime;
-    user.isVerified=false;
+    user.isVerified = false;
     await user.save();
 
     // Send email with new OTP
-    await sendVerificationEmail(user.email,otpCode);
+    await sendVerificationEmail(user.email, otpCode);
 
-    return res.status(200).json({ message: 'OTP resent successfully' });
+    return res.status(200).json({ message: "OTP resent successfully" });
   } catch (error) {
-    return res.status(500).json({ message: 'An error occurred while resending OTP', error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "An error occurred while resending OTP",
+        error: error.message,
+      });
   }
 };
-
 
 export const login = async (req, res) => {
   try {
@@ -159,11 +168,13 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
     }
-// check if the otp has been verified and if not delete the user credentials
-if(!user.isVerified){
-  await User.findByIdAndDelete(user.id);
-  return res.status(403).json({ message: "Please verify your email first" });
-};
+    // check if the otp has been verified and if not delete the user credentials
+    if (!user.isVerified) {
+      await User.findByIdAndDelete(user.id);
+      return res
+        .status(403)
+        .json({ message: "Please verify your email first" });
+    }
 
     //  Create JWT payload and sign the token
     const payload = {
@@ -186,13 +197,13 @@ export const forgetPassword = async (req, res) => {
     const { email } = req.body;
     // Validate input
     if (!email) {
-      res.status(400).json({message:"Invalid email"});
+      res.status(400).json({ message: "Invalid email" });
       return;
     }
     // Check if user exist
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(404).json({message:"User doesn't Exist"});
+      res.status(404).json({ message: "User doesn't Exist" });
       return;
     }
     // Generate token and resetLink
@@ -211,8 +222,10 @@ export const forgetPassword = async (req, res) => {
     user.resetLinkToken = resetToken;
     await user.save();
     // Send email
-   await sendFgPasswordLink(email,resetLink);
-   return res.status(200).json({ message: "Your Password Reset link has been sent to your mail" });
+    await sendFgPasswordLink(email, resetLink);
+    return res
+      .status(200)
+      .json({ message: "Your Password Reset link has been sent to your mail" });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ message: error.message });
@@ -290,33 +303,39 @@ export const getUserByIdOrName = async (req, res) => {
   }
 };
 
-export const UserProfile = async(req,res)=>{
-  try{
+export const UserProfile = async (req, res) => {
+  try {
     const userId = req.user;
-  
-      // Find the user by ID
-      const user = await User.findById(userId);
-      
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-  res.status(200).json({message:'User Profile'},user);
-  }catch(error){
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({ message: "User Profile" }, user);
+  } catch (error) {
     console.log(error.message);
     return res.status(500).json({ message: error.message });
   }
-  };
+};
 
 export const updateUser = async (req, res) => {
+  const { error } = updateUserSchema.validate(req.body);
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
   try {
     const userId = req.user;
-    const {data}=req.body;
-    if (!data) {
-      return res
-        .status(400)
-        .json({ message: "Please provide all fields" });
-    }
-    const user = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
+    const data = req.body;
+
+    const user = await User.findByIdAndUpdate(userId, data, {
+      new: true,
+      runValidators: true,
+    });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -326,7 +345,7 @@ export const updateUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User updated successfully",
-      user
+      user,
     });
   } catch (error) {
     res.status(400).json({
@@ -372,25 +391,32 @@ export const changePassword = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     const isMatch = await user.comparePassword(oldPassword, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Old password is incorrect' });
+      return res.status(400).json({ message: "Old password is incorrect" });
     }
 
     // Check if the new password is different from the old password
-    const isSameAsOldPassword = await bcrypt.compare(newPassword, user.password);
+    const isSameAsOldPassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
     if (isSameAsOldPassword) {
-      return res.status(400).json({ message: 'New password cannot be the same as the old password' });
-    };
-    
-    user.password = newPassword; 
+      return res
+        .status(400)
+        .json({
+          message: "New password cannot be the same as the old password",
+        });
+    }
+
+    user.password = newPassword;
     await user.save();
-    res.json({ message: 'Password changed successfully' });
+    res.json({ message: "Password changed successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };

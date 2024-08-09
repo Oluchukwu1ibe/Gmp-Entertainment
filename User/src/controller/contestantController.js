@@ -2,117 +2,132 @@ import Video from "../models/videos.js";
 import { createJwtToken, verifyContestantToken } from "../middleware/token.js";
 import Contestant from "../models/contestant.js";
 import cloudinary from "../utils/cloudinary.js";
-import { sendFgPasswordLink, sendResetPassConfirmation, sendVerificationEmail, sendWelcomeEmail } from "../utils/email-sender.js";
+import {
+  sendFgPasswordLink,
+  sendResetPassConfirmation,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../utils/email-sender.js";
 import generateOtp from "../utils/otpGenerator.js";
-
+import { updateContestantSchema } from "../utils/validation.js";
 // register contestant
 export const createContestant = async (req, res) => {
-    try {
-      const {FullName,email,password} = req.body;
-      
-      // Validate input
-      if (!(FullName||email||password)) {
-        return res.status(400).json({ error: "Please input all fields" });
-      }
-  
-  
-      // Check if contestant already exists
-      const existingContestant = await Contestant.findOne({ email });
-      if (existingContestant) {
-        return res.status(409).json({ message: "Contestant with this email already exists." });
-      }
-  
-      
-  
-      // Save new contestant to the database
-      const contestant = await Contestant.create({
-        FullName,
-        email,
-        password,
-        // image: results.map((result) => result.imageUrl), // Use results instead of result
-      });
-  // generate OTP and save it to the database
-  let otp = generateOtp();
-  const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
-  contestant.otpCode = otp;
-  contestant.otpExpirationTime = otpExpirationTime;
-  await contestant.save();
-  //send verification Email with generated OTP
-  await sendVerificationEmail(contestant.email, otp);
-      res.status(201).json({ message: `OTP successfully sent to ${contestant.email}`, contestant });
-    } catch (error) {
-      console.error("Error in creating contestant", error);
-      res.status(500).json({ error: "Server Error" });
-    }
-  };
- 
-  // verify the otp
-  export const verifyOtp = async (req, res) => {
-    try {
-      //  input
-      const { otpCode } = req.body;
-      if (!otpCode) {
-        return res
-          .status(400)
-          .json({ message: "Please provide the otp code sent" });
-      }
-      // check if user  exist
-      const contestant = await Contestant.findById({ _id: req.params.contestant_id });
-      if (!contestant) {
-        return res.status(404).json({ message: "Contestant not Found" });
-      }
-  
-      // Check if user is already verified
-      if (contestant.isVerified) {
-        return res.status(409).json({ message: "Contestant is already verified" });
-      }
-  
-      //    check if the otp is correct
-      if (contestant.otpCode !== otpCode) {
-        return res.status(400).json({message:"OTP is incorrect"});
-      }
-      
-      // Check if OTP has expired
-      if (Date.now() > new Date(contestant.otpExpirationTime).getTime()) {
-        return res.status(409).json({ message: 'OTP expired, please resend OTP' });
-      };
-      //create a payload and tokenize it
-      const payload = {
-        contestantId: contestant._id,
-        FullName: contestant.FullName,
-        email: contestant.email,
-      };
-      const token = createJwtToken(payload);
-      // Mark isVerified and clear OTP
-      contestant.isVerified = true;
-      contestant.otpCode = null;
-      contestant.otpExpirationTime = null;
-      await contestant.save();
-      //send welcome email
-      await sendWelcomeEmail(contestant.email);
-      // success response
-      // logger.info(user._doc);
-      return res.status(200).json({
-        success: true,
-        message: "OTP successfully verified",
-        contestant,
-        token,
-      });
-    } catch (error) {
-      return res.status(503).json({
-        error: error.message,
-        message: "An error occurred during OTP verification",
-      });
-    }
-  };
+  try {
+    const { FullName, email, password } = req.body;
 
-  export const resendOtp = async (req, res) => {
+    // Validate input
+    if (!(FullName || email || password)) {
+      return res.status(400).json({ error: "Please input all fields" });
+    }
+
+    // Check if contestant already exists
+    const existingContestant = await Contestant.findOne({ email });
+    if (existingContestant) {
+      return res
+        .status(409)
+        .json({ message: "Contestant with this email already exists." });
+    }
+
+    // Save new contestant to the database
+    const contestant = await Contestant.create({
+      FullName,
+      email,
+      password,
+      // image: results.map((result) => result.imageUrl), // Use results instead of result
+    });
+    // generate OTP and save it to the database
+    let otp = generateOtp();
+    const otpExpirationTime = new Date(Date.now() + 5 * 60 * 1000);
+    contestant.otpCode = otp;
+    contestant.otpExpirationTime = otpExpirationTime;
+    await contestant.save();
+    //send verification Email with generated OTP
+    await sendVerificationEmail(contestant.email, otp);
+    res
+      .status(201)
+      .json({
+        message: `OTP successfully sent to ${contestant.email}`,
+        contestant,
+      });
+  } catch (error) {
+    console.error("Error in creating contestant", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+// verify the otp
+export const verifyOtp = async (req, res) => {
+  try {
+    //  input
+    const { otpCode } = req.body;
+    if (!otpCode) {
+      return res
+        .status(400)
+        .json({ message: "Please provide the otp code sent" });
+    }
+    // check if user  exist
+    const contestant = await Contestant.findById({
+      _id: req.params.contestant_id,
+    });
+    if (!contestant) {
+      return res.status(404).json({ message: "Contestant not Found" });
+    }
+
+    // Check if user is already verified
+    if (contestant.isVerified) {
+      return res
+        .status(409)
+        .json({ message: "Contestant is already verified" });
+    }
+
+    //    check if the otp is correct
+    if (contestant.otpCode !== otpCode) {
+      return res.status(400).json({ message: "OTP is incorrect" });
+    }
+
+    // Check if OTP has expired
+    if (Date.now() > new Date(contestant.otpExpirationTime).getTime()) {
+      return res
+        .status(409)
+        .json({ message: "OTP expired, please resend OTP" });
+    }
+    //create a payload and tokenize it
+    const payload = {
+      contestantId: contestant._id,
+      FullName: contestant.FullName,
+      email: contestant.email,
+    };
+    const token = createJwtToken(payload);
+    // Mark isVerified and clear OTP
+    contestant.isVerified = true;
+    contestant.otpCode = null;
+    contestant.otpExpirationTime = null;
+    await contestant.save();
+    //send welcome email
+    await sendWelcomeEmail(contestant.email);
+    // success response
+    // logger.info(user._doc);
+    return res.status(200).json({
+      success: true,
+      message: "OTP successfully verified",
+      contestant,
+      token,
+    });
+  } catch (error) {
+    return res.status(503).json({
+      error: error.message,
+      message: "An error occurred during OTP verification",
+    });
+  }
+};
+
+export const resendOtp = async (req, res) => {
   try {
     const { contestantId } = req.body;
 
     const contestant = await Contestant.findById(contestantId);
     if (!contestant) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Generate a new OTP code
@@ -128,65 +143,74 @@ export const createContestant = async (req, res) => {
     // Send email with new OTP
     await sendVerificationEmail(contestant.email, otpCode);
 
-    return res.status(200).json({ message: 'OTP resent successfully' });
+    return res.status(200).json({ message: "OTP resent successfully" });
   } catch (error) {
-    return res.status(500).json({ message: 'An error occurred while resending OTP', error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "An error occurred while resending OTP",
+        error: error.message,
+      });
   }
 };
 
-  export const login = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      // validate input
-      if (!email || !password) {
-        return res
-          .status(400)
-          .json({ message: "Please provide an email and password" });
-      }
-      // find the user by their email address
-      const contestant = await Contestant.findOne({ email });
-  
-      if (!contestant) {
-        return res.status(401).json({ message: "Invalid email" });
-      }
-  
-      const isPasswordValid = await contestant.comparePassword(password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Invalid password" });
-      }
-      // check if the otp has been verified and if not delete the contestant credentials
-if(!contestant.isVerified){
-  await Contestant.findByIdAndDelete(contestant.id);
-  return res.status(403).json({ message: "Please verify your email first" });
-};
-      //  Create JWT payload and sign the token
-      const payload = {
-        contestantId: contestant._id,
-        FullName: contestant.FullName,
-        email: contestant.email,
-      };
-      const token = createJwtToken(payload);
-  
-      return res.status(201).json({ message: "Contestant login successfully", token });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({ error: error.message });
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    // validate input
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Please provide an email and password" });
     }
-  };
+    // find the user by their email address
+    const contestant = await Contestant.findOne({ email });
 
-  // forgot password
+    if (!contestant) {
+      return res.status(401).json({ message: "Invalid email" });
+    }
+
+    const isPasswordValid = await contestant.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+    // check if the otp has been verified and if not delete the contestant credentials
+    if (!contestant.isVerified) {
+      await Contestant.findByIdAndDelete(contestant.id);
+      return res
+        .status(403)
+        .json({ message: "Please verify your email first" });
+    }
+    //  Create JWT payload and sign the token
+    const payload = {
+      contestantId: contestant._id,
+      FullName: contestant.FullName,
+      email: contestant.email,
+    };
+    const token = createJwtToken(payload);
+
+    return res
+      .status(201)
+      .json({ message: "Contestant login successfully", token });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// forgot password
 export const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
     // Validate input
     if (!email) {
-      res.status(400).json({message:"Invalid email"});
+      res.status(400).json({ message: "Invalid email" });
       return;
     }
     // Check if user exist
     const contestant = await Contestant.findOne({ email });
     if (!contestant) {
-      res.status(404).json({message:"Contestant doesn't Exist"});
+      res.status(404).json({ message: "Contestant doesn't Exist" });
       return;
     }
     // Generate token and resetLink
@@ -205,8 +229,10 @@ export const forgetPassword = async (req, res) => {
     contestant.resetLinkToken = resetToken;
     await contestant.save();
     // Send email
-   await sendFgPasswordLink(email,resetLink);
-   return res.status(200).json({ message: "Your Password Reset link has been sent to your mail" });
+    await sendFgPasswordLink(email, resetLink);
+    return res
+      .status(200)
+      .json({ message: "Your Password Reset link has been sent to your mail" });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ message: error.message });
@@ -287,35 +313,43 @@ export const getContestantByIdOrName = async (req, res) => {
 };
 
 // profile
-export const contestantProfile = async(req,res)=>{
-try{
-  const contestantId = req.contestant;
+export const contestantProfile = async (req, res) => {
+  try {
+    const contestantId = req.contestant;
 
     // Find the contestant by ID
     const contestant = await Contestant.findById(contestantId);
-    
+
     if (!contestant) {
       return res.status(404).json({ error: "Contestant not found" });
     }
-res.status(200).json({message:'Contestant Profile'},contestant);
-}catch(error){
-  console.log(error.message);
-  return res.status(500).json({ message: error.message });
-}
+    res.status(200).json({ message: "Contestant Profile" }, contestant);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ message: error.message });
+  }
 };
 // update profile
 export const updateContestant = async (req, res) => {
+  const { error } = updateContestantSchema.validate(req.body);
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
   try {
     const contestantId = req.contestant;
     const updatedData = req.body;
-    if(!updatedData){
-      return res.status(400).json({error:'No data provided'});
-    }
 
-    const contestant = await Contestant.findByIdAndUpdate(contestantId, updatedData, {
-      new: true,
-      runValidators: true,
-    });
+    const contestant = await Contestant.findByIdAndUpdate(
+      contestantId,
+      updatedData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!contestant) {
       return res.status(404).json({
@@ -336,7 +370,6 @@ export const updateContestant = async (req, res) => {
     });
   }
 };
-
 
 export const deleteContestant = async (req, res) => {
   try {
@@ -388,16 +421,22 @@ export const uploadImage = async (req, res) => {
     }
 
     // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, { resource_type: "image" });
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "image",
+    });
 
     // Save the image URL in the contestant database
     contestant.image = result.secure_url;
     await contestant.save();
 
-    res.status(200).json({ message: "Image uploaded successfully",contestant});
+    res
+      .status(200)
+      .json({ message: "Image uploaded successfully", contestant });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "An error occurred while uploading the image" });
+    res
+      .status(500)
+      .json({ error: "An error occurred while uploading the image" });
   }
 };
 
@@ -408,7 +447,7 @@ export const uploadVideo = async (req, res) => {
 
     // Find the contestant by ID
     const contestant = await Contestant.findById(contestantId);
-    
+
     if (!contestant) {
       return res.status(404).json({ error: "Contestant not found" });
     }
@@ -423,16 +462,20 @@ export const uploadVideo = async (req, res) => {
     // Check if the contestant has already posted the video (assuming you want to limit one video per contestant)
     const existingVideo = await Video.findOne({ contestant: contestantId });
     if (existingVideo) {
-      return res.status(400).json({ message: "Contestant has already uploaded a video" });
-    };
+      return res
+        .status(400)
+        .json({ message: "Contestant has already uploaded a video" });
+    }
 
-     // Ensure the file is uploaded
-     if (!req.file) {
+    // Ensure the file is uploaded
+    if (!req.file) {
       return res.status(400).json({ message: "No video file uploaded" });
     }
 
     // Upload the video to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, { resource_type: "video" });
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "video",
+    });
 
     // Save the video to the database
     const video = await Video.create({
@@ -446,7 +489,7 @@ export const uploadVideo = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Video uploaded successfully",
-      video
+      video,
     });
   } catch (error) {
     console.error("Error uploading video:", error);
@@ -456,7 +499,7 @@ export const uploadVideo = async (req, res) => {
 
 // delete video
 
-export const deleteVideo =async(req,res)=>{
+export const deleteVideo = async (req, res) => {
   try {
     const contestantId = req.contestant;
 
@@ -470,19 +513,19 @@ export const deleteVideo =async(req,res)=>{
     if (!contestant) {
       return res.status(404).json({ error: "Contestant not found" });
     }
-        // Find the video associated with the contestant
-        const video = await Video.findOne({ contestant });
-        
-        if (!video) {
-          return res.status(404).json({ error: "Video not found" });
-          }
-    
-        // Delete the video
-        await Video.deleteOne({ _id: video._id });
-    
-        return res.status(200).json({ message: "Video deleted successfully" });
+    // Find the video associated with the contestant
+    const video = await Video.findOne({ contestant });
+
+    if (!video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    // Delete the video
+    await Video.deleteOne({ _id: video._id });
+
+    return res.status(200).json({ message: "Video deleted successfully" });
   } catch (error) {
     console.error("Error deleting video:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
-}
+};
