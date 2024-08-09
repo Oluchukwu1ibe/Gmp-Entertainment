@@ -24,7 +24,7 @@ const contestantSchema = new Schema({
     type: String,
     trim: true,
   },
-  DOb: {
+  Dob: {
     type: Date,
   },
   sex: {

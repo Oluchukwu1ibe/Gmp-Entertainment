@@ -308,6 +308,9 @@ export const updateContestant = async (req, res) => {
   try {
     const contestantId = req.contestant;
     const updatedData = req.body;
+    if(!updatedData){
+      return res.status(400).json({error:'No data provided'});
+    }
 
     const contestant = await Contestant.findByIdAndUpdate(contestantId, updatedData, {
       new: true,
