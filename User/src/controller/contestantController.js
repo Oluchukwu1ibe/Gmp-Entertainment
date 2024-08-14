@@ -15,10 +15,10 @@ import bcrypt from "bcrypt";
 // register contestant
 export const createContestant = async (req, res) => {
   try {
-    const { FullName, email, password } = req.body;
+    const { fullName, email, password } = req.body;
 
     // Validate input
-    if (!(FullName || email || password)) {
+    if (!(fullName || email || password)) {
       return res.status(400).json({ error: "Please input all fields" });
     }
 
@@ -32,7 +32,7 @@ export const createContestant = async (req, res) => {
 
     // Save new contestant to the database
     const contestant = await Contestant.create({
-      FullName,
+      fullName,
       email,
       password,
       // image: results.map((result) => result.imageUrl), // Use results instead of result
@@ -96,7 +96,7 @@ export const verifyOtp = async (req, res) => {
     //create a payload and tokenize it
     const payload = {
       contestantId: contestant._id,
-      FullName: contestant.FullName,
+      fullName: contestant.fullName,
       email: contestant.email,
     };
     const token = createJwtToken(payload);
@@ -186,7 +186,7 @@ export const login = async (req, res) => {
     //  Create JWT payload and sign the token
     const payload = {
       contestantId: contestant._id,
-      FullName: contestant.FullName,
+      fullName: contestant.fullName,
       email: contestant.email,
     };
     const token = createJwtToken(payload);

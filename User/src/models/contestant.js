@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 import bcrypt from 'bcrypt';
 const contestantSchema = new Schema({
-  FullName: {
+  fullName: {
     type: String,
     required: true,
     trim: true,
@@ -20,11 +20,11 @@ const contestantSchema = new Schema({
     trim: true,
     minLength: 6,
   },
-  DisplayName: {
+  displayName: {
     type: String,
     trim: true,
   },
-  Dob: {
+  dob: {
     type: Date,
   },
   sex: {
@@ -36,7 +36,7 @@ const contestantSchema = new Schema({
   occupation: {
     type: String,
   },
-  AboutMe: {
+  aboutMe: {
     type: String,
   },
   image:{

@@ -4,11 +4,11 @@ import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
   {
-    Name: {
+    name: {
       type: String,
       trim: true,
     },
-    DisplayName: {
+    displayName: {
       type: String,
       trim: true,
     },
