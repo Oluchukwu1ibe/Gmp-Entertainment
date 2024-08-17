@@ -184,7 +184,11 @@ export const login = async (req, res) => {
     };
     const token = createJwtToken(payload);
 
-    return res.status(201).json({ message: "User login successfully", token });
+    return res.status(201).json({
+      success: true,
+       message: "User login successfully",
+       token
+       });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
