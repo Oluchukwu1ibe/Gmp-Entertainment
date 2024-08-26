@@ -48,6 +48,7 @@ export const createContestant = async (req, res) => {
     res
       .status(201)
       .json({
+        success: true,
         message: `OTP successfully sent to ${contestant.email}`,
         contestant,
       });
@@ -193,7 +194,7 @@ export const login = async (req, res) => {
 
     return res
       .status(201)
-      .json({success: true, message: "Contestant login successfully", token });
+      .json({success: true, message: "Contestant login successfully",contestant, token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
@@ -298,8 +299,8 @@ export const getContestantByIdOrName = async (req, res) => {
   let query = {};
   if (req.params.id) {
     query._id = req.params.id;
-  } else if (req.params.name) {
-    query.name = req.params.name;
+  } else if (req.params.fullName) {
+    query.fullName = req.params.fullName;
   }
 
   try {
