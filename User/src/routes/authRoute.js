@@ -1,6 +1,7 @@
 import express from "express";
 import { UserProfile, changePassword, deleteUser, forgetPassword, getAllUsers, getUserByIdOrName, login, register, resendOtp, resetPassword, updateUser, verifyOtp } from "../controller/authController.js";
 import { authenticateUserToken } from "../middleware/checkAuth.js";
+import {subscribeNewsletter} from "../controller/subscribeController.js";
 
 const router = express.Router();
 
@@ -17,4 +18,5 @@ router.put('/users/edit',authenticateUserToken, updateUser);
 router.delete('/users/:id', deleteUser);
 router.get('/profile',authenticateUserToken,UserProfile);
 router.post('/change-password',authenticateUserToken,changePassword);
+router.post('/subscribe', subscribeNewsletter);
 export default router;
