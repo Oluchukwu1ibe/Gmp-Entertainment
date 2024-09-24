@@ -62,6 +62,7 @@ const contestantSchema = new Schema({
     default: "",
     expiresIn: "5m",
   },
+  role: { type: String, enum: ["admin", "contestant"], default: "contestant" },
   
 },
 {

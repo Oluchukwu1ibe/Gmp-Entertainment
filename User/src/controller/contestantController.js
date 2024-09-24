@@ -99,6 +99,7 @@ export const verifyOtp = async (req, res) => {
       contestantId: contestant._id,
       fullName: contestant.fullName,
       email: contestant.email,
+      role:contestant.role,
     };
     const token = createJwtToken(payload);
     // Mark isVerified and clear OTP
@@ -189,6 +190,7 @@ export const login = async (req, res) => {
       contestantId: contestant._id,
       fullName: contestant.fullName,
       email: contestant.email,
+      role:contestant.role,
     };
     const token = createJwtToken(payload);
 
