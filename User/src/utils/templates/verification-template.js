@@ -1,168 +1,160 @@
 const verificationTemplate = (generateOtp) => {
-    // const OTP = generateOtp(user.emailOtp);
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email otp</title>
+        <title>Email OTP</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Anek+Gurmukhi:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
-            body{
+            body {
                 margin: 0;
                 padding: 0;
-                box-sizing: border-box;
                 font-family: 'Anek Gurmukhi', sans-serif;
-            }
-            .email-otp{
-                width: 50%;
-                margin: 0 auto;
-                margin-bottom: 42px;
-            }
-            .email-otp h1{
-                font-weight: 500;
-                line-height: 32px;
-                font-size: 24px;
-                text-align: start;
-                margin-top: 15px;
-            }
-            .hi{
-                font-size: 24px;
-                line-height: 28px;
-                font-weight: 400;
-                text-align: start;
-            }
-            .email-otp h2{
-                font-size: 50px;
-                line-height: 62px;
-                font-weight: 600;
+                background-color: #f9f9f9;
                 color: #333;
-                margin: 0 auto;
-                width: 489px;
+                box-sizing: border-box;
             }
-            .otp{
-              font-size: 18px;
-            }
-            .click{
-               width: 357px;
-            }
-            .get-app hr{
-                width: 125px;
-                margin: 0 auto;
-                border: 1px solid rgba(0,0,0,0.24);
-                margin-bottom: 16px;
-            }
-            .get-app h3{
-                font-weight: 400;
-                font-size: 24px;
-                line-height: 32px;
-                margin-bottom: 16px;
-                text-align: center;
-            }
-            .get-app p{
-                color: #666;
-                width: 512px;
-                margin: 0 auto;
-                margin-bottom: 17px;
-                text-align: center;
-            }
-            .store{
-               text-align: center;
-               margin: 0 auto;
-               width: 90%;
-               margin-bottom: 72px;
-            }
-            .store img{
-                cursor: pointer;
-                max-width: 100%;
-            }
-    
-            .footer{
+            .container {
                 width: 100%;
-                height: 239px;
-                background-image: url('https://res.cloudinary.com/dhekqilcw/image/upload/v1687596415/mgjj1n02ixqc9frk8h2x.png');
-                background-size: cover;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
             }
-            .footer-socials{
-              width: 100px;
-                padding-top: 64.69px;
-                margin:0 auto;
-                margin-bottom: 19.74px;
-                gap: 28px;
+            .header {
+                background-color: #000;
+                padding: 20px;
                 text-align: center;
-          }
-            .logo{
-               margin: 0 auto;
-               display: block;
-               margin-bottom: 10px; 
+                color: #fff;
+                border-radius: 8px 8px 0 0;
             }
-            .footer p{
-                font-weight: 400;
-                line-height: 16px;
+            .header img {
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+                margin-right: 10px;
+            }
+            .header h2 {
+                font-size: 22px;
+                margin: 0;
+                font-weight: 600;
+            }
+            .otp-section {
+                text-align: center;
+                margin: 40px 0;
+            }
+            .otp-section p {
+                font-size: 16px;
+                color: #333;
+            }
+            .otp-section .otp {
+                font-size: 36px;
+                font-weight: bold;
+                color: #B59410;
+                margin: 20px 0;
+            }
+            .get-app-section {
+                text-align: center;
+            }
+            .get-app-section hr {
+                width: 150px;
+                border: 1px solid rgba(0, 0, 0, 0.24);
+            }
+            h3 {
+                font-size: 24px;
+                margin-bottom: 16px;
+                font-weight: 500;
+                color: #000;
+            }
+            .get-app-section p {
+                font-size: 14px;
+                color: #000;
+                width: 90%;
+                max-width: 512px;
+                margin: 0 auto 20px;
+            }
+            .get-app-section img {
+                max-width: 120px;
+                margin: 10px;
+                cursor: pointer;
+            }
+            .footer {
+                background-color: #f4f4f4;
+                padding: 20px;
+                text-align: center;
+                border-radius: 0 0 8px 8px;
+            }
+            .footer img {
+                width: 60px;
+                margin-bottom: 10px;
+            }
+            .footer-socials a {
+                margin: 0 10px;
+            }
+            .footer-socials img {
+                width: 30px;
+            }
+            .footer p {
                 font-size: 12px;
-                text-align: center;
+                color: #666;
+                margin: 10px 0 0;
             }
-            @media screen and (max-width: 1024px) {
-                .email-otp{
-                    width: 85%;
+            @media (max-width: 600px) {
+                .container {
+                    padding: 10px;
                 }
-            }
-            @media screen and (max-width: 640px) {
-                .email-otp h1{
-                    font-size: 14px;
+                .otp-section {
+                    margin: 20px 0;
                 }
-                .hi{
-                    font-size: 18px;
+                .get-app-section h3 {
+                    font-size: 20px;
                 }
-                .email-otp h2{
-                    font-size: 24px;
-    
-                    width: 100%;
+                .get-app-section img {
+                    max-width: 100px;
                 }
-                .click{
-                    width: 100%;
-                }
-                .get-app p{
-                    width: 90%;
-                }
-                
             }
         </style>
     </head>
     <body>
-        <div>
-            <div class='email-otp'>
-                <p class='hi'>Hello, </p>
-                <h2>Verification Pin</h2>
+        <div class="container">
+            <!-- Header Section -->
+            <div class="header">
+                <img src="https://res.cloudinary.com/dghrve7zl/image/upload/v1728779486/gmp_logo_h2apua.png" alt="GMP Logo">
+                <h2>GMP Entertainment</h2>
+            </div>
+
+            <!-- OTP Section -->
+            <div class="otp-section">
                 <p>Please verify your email by entering this pin on the verification page</p>
                 <p class="otp">${generateOtp?.toString()}</p>
             </div>
-           <div class="get-app">
-                <hr/>
-               <h3>Get the GMP app!</h3>
-                <p>Get the most of GMP by installing the mobile app. You can log in by using your existing emails address and password.</p>
-                <div class='store'>
-                    <img src='https://res.cloudinary.com/dhekqilcw/image/upload/v1690635292/Group_dvmkgi.png' alt='app store logo'  />
-                <img src='https://res.cloudinary.com/dhekqilcw/image/upload/v1690635312/googleplay_ymmdxj.png' alt='google store logo' />
+            <!-- Get the App Section -->
+            <div class="get-app-section">
+                <h3>Get the GMPEntertainment App!</h3>
+                <img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1690635292/Group_dvmkgi.png" alt="App Store">
+                <img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1690635312/googleplay_ymmdxj.png" alt="Google Play Store">
+                <p>Make the most of your experience by downloading our mobile app. Log in with your email and password to access your account on the go.</p>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="footer">
+                <img src="https://res.cloudinary.com/dghrve7zl/image/upload/v1728779486/gmp_logo_h2apua.png" alt="GMP Logo">
+                <div class="footer-socials">
+                    <a href="#"><img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986596/twitterlogo_w6imak.png" alt="Twitter"></a>
+                    <a href="#"><img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986679/facebooklogo_iyntcg.png" alt="Facebook"></a>
+                    <a href="#"><img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986662/linkedin_yzexwx.png" alt="LinkedIn"></a>
                 </div>
+                <p>Copyright &copy; 2024 GMP Entertainment. All Rights Reserved.</p>
             </div>
-            
-         <div class='footer'>
-            <div class='footer-socials'>
-              <img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986596/twitterlogo_w6imak.png" alt="twitter">
-            <img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986679/facebooklogo_iyntcg.png" alt="facebook">
-              <img src="https://res.cloudinary.com/dhekqilcw/image/upload/v1688986662/linkedin_yzexwx.png" alt="linkedin">
-            </div>
-            <img src='https://res.cloudinary.com/dhekqilcw/image/upload/v1688986634/saveylogo_fekkxc.png' alt="savey logo" class='logo'/>
-            <p>Copyright &copy; 2023</p>              
-         </div>
-         </div> 
+        </div>
     </body>
     </html>`;
-  };
-  
-  export default verificationTemplate;
-  
+};
+
+export default verificationTemplate;
