@@ -1,6 +1,7 @@
 import Vote from '../models/Vote.js';
 import User from '../models/User.js';
  import Contestant from '../models/contestant.js';
+ import logger from "../utils/log/log.js";
 
 
 // Create a new vote
@@ -41,9 +42,10 @@ export const createVote = async (req, res) => {
       user.isVoted = true;
       await user.save();
       // Return success message
+      logger.info({ message: 'Vote created successfully', vote })
       res.status(201).json({ message: 'Vote created successfully', vote });
   } catch (error) {
-    console.error("Error in creating vote:", error);
+    logger.error("Error in creating vote:", error);
     res.status(500).json({ error: "Server Error" });
 
   }
@@ -56,6 +58,7 @@ export const createVote = async (req, res) => {
       const votes = await Vote.find().populate('user').populate('contestant').sort({ _id: -1 });
       res.status(200).json({ message: "Votes information", totalVotesCount, votes });
     } catch (error) {
+      logger.error("Error in getting votes:", error.message);
       res.status(400).json({ message: error.message });
     }
   };

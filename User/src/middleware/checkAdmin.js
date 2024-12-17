@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import  { verifyJwtToken } from "./token.js";
+import logger from '../utils/log/log.js';
 
 export default async (req, res, next) => {
     try {
@@ -40,7 +41,7 @@ export default async (req, res, next) => {
         return next();
       }
     } catch (error) {
-      console.log(error);
+      logger.error(error);
     };
   };
   

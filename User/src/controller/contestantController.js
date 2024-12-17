@@ -11,6 +11,7 @@ import {
 import generateOtp from "../utils/otpGenerator.js";
 import { updateContestantSchema } from "../utils/validation.js";
 import bcrypt from "bcrypt";
+import logger from "../utils/log/log.js";
 
 // register contestant
 export const createContestant = async (req, res) => {
@@ -45,15 +46,14 @@ export const createContestant = async (req, res) => {
     await contestant.save();
     //send verification Email with generated OTP
     await sendVerificationEmail(contestant.email, otp);
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: `OTP successfully sent to ${contestant.email}`,
-        contestant,
-      });
+    logger.info({ message: `OTP successfully sent to ${contestant.email}` });
+    res.status(201).json({
+      success: true,
+      message: `OTP successfully sent to ${contestant.email}`,
+      contestant,
+    });
   } catch (error) {
-    console.error("Error in creating contestant", error);
+    logger.error("Error in creating contestant", error);
     res.status(500).json({ error: "Server Error" });
   }
 };
@@ -99,7 +99,7 @@ export const verifyOtp = async (req, res) => {
       contestantId: contestant._id,
       fullName: contestant.fullName,
       email: contestant.email,
-      role:contestant.role,
+      role: contestant.role,
     };
     const token = createJwtToken(payload);
     // Mark isVerified and clear OTP
@@ -110,7 +110,7 @@ export const verifyOtp = async (req, res) => {
     //send welcome email
     await sendWelcomeEmail(contestant.email);
     // success response
-    // logger.info(user._doc);
+    logger.info({ message: "OTP successfully verified" });
     return res.status(200).json({
       success: true,
       message: "OTP successfully verified",
@@ -118,6 +118,7 @@ export const verifyOtp = async (req, res) => {
       token,
     });
   } catch (error) {
+    logger.error(error.message);
     return res.status(503).json({
       error: error.message,
       message: "An error occurred during OTP verification",
@@ -146,15 +147,14 @@ export const resendOtp = async (req, res) => {
 
     // Send email with new OTP
     await sendVerificationEmail(contestant.email, otpCode);
-
+    logger.info({ message: "OTP resent successfully" });
     return res.status(200).json({ message: "OTP resent successfully" });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "An error occurred while resending OTP",
-        error: error.message,
-      });
+    logger.error(error.message);
+    return res.status(500).json({
+      message: "An error occurred while resending OTP",
+      error: error.message,
+    });
   }
 };
 
@@ -190,15 +190,18 @@ export const login = async (req, res) => {
       contestantId: contestant._id,
       fullName: contestant.fullName,
       email: contestant.email,
-      role:contestant.role,
+      role: contestant.role,
     };
     const token = createJwtToken(payload);
-
-    return res
-      .status(201)
-      .json({success: true, message: "Contestant login successfully",contestant, token });
+    logger.info({ message: "Contestant login successfully" });
+    return res.status(201).json({
+      success: true,
+      message: "Contestant login successfully",
+      contestant,
+      token,
+    });
   } catch (error) {
-    console.log(error);
+    logger.error(error.message);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -235,11 +238,14 @@ export const forgetPassword = async (req, res) => {
     await contestant.save();
     // Send email
     await sendFgPasswordLink(email, resetLink);
+    logger.info({
+      message: "Your Password Reset link has been sent to your mail",
+    });
     return res
       .status(200)
       .json({ message: "Your Password Reset link has been sent to your mail" });
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -273,6 +279,7 @@ export const resetPassword = async (req, res, next) => {
 
       // Send email
       await sendResetPassConfirmation(contestant.email);
+      logger.info({ message: "Contestant password reset successfully" });
       return res
         .status(200)
         .json({ message: "Contestant password reset successfully" });
@@ -280,7 +287,7 @@ export const resetPassword = async (req, res, next) => {
       return res.status(401).json({ error: "Authentication error" });
     }
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -291,7 +298,7 @@ export const getAllContestants = async (req, res) => {
     const contestants = await Contestant.find();
     res.status(200).json(contestants);
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -312,7 +319,7 @@ export const getContestantByIdOrName = async (req, res) => {
     }
     res.status(200).json(contestant);
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -328,9 +335,10 @@ export const contestantProfile = async (req, res) => {
     if (!contestant) {
       return res.status(404).json({ error: "Contestant not found" });
     }
+    logger.info({ message: "Contestant Profile" }, contestant);
     res.status(200).json({ message: "Contestant Profile" }, contestant);
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -362,13 +370,14 @@ export const updateContestant = async (req, res) => {
         message: "Contestant not found",
       });
     }
-
+    logger.info({ message: "Contestant updated successfully" });
     res.status(200).json({
       success: true,
       message: "Contestant updated successfully",
       contestant,
     });
   } catch (error) {
+    logger.error(error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -391,12 +400,15 @@ export const deleteContestant = async (req, res) => {
 
     // Delete the contestant
     await contestant.deleteOne();
-
+    logger.info({
+      message: "Contestant and associated video deleted successfully",
+    });
     return res.status(200).json({
       success: true,
       message: "Contestant and associated video deleted successfully",
     });
   } catch (error) {
+    logger.error(error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -433,12 +445,12 @@ export const uploadImage = async (req, res) => {
     // Save the image URL in the contestant database
     contestant.image = result.secure_url;
     await contestant.save();
-
+    logger.info({ message: "Image uploaded successfully"});
     res
       .status(200)
       .json({ message: "Image uploaded successfully", contestant });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res
       .status(500)
       .json({ error: "An error occurred while uploading the image" });
@@ -491,13 +503,14 @@ export const uploadVideo = async (req, res) => {
     });
 
     // Respond with the created video
+    logger.info({ message: "Video uploaded successfully" });
     return res.status(201).json({
       success: true,
       message: "Video uploaded successfully",
       video,
     });
   } catch (error) {
-    console.error("Error uploading video:", error);
+    logger.error("Error uploading video:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -527,10 +540,10 @@ export const deleteVideo = async (req, res) => {
 
     // Delete the video
     await Video.deleteOne({ _id: video._id });
-
+    logger.info({ message: "Video deleted successfully" });
     return res.status(200).json({ message: "Video deleted successfully" });
   } catch (error) {
-    console.error("Error deleting video:", error);
+    logger.error("Error deleting video:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -547,7 +560,10 @@ export const changePassword = async (req, res) => {
       return res.status(404).json({ message: "Contestant not found" });
     }
 
-    const isMatch = await contestant.comparePassword(oldPassword, contestant.password);
+    const isMatch = await contestant.comparePassword(
+      oldPassword,
+      contestant.password
+    );
 
     if (!isMatch) {
       return res.status(400).json({ message: "Old password is incorrect" });
@@ -559,18 +575,18 @@ export const changePassword = async (req, res) => {
       contestant.password
     );
     if (isSameAsOldPassword) {
-      return res
-        .status(400)
-        .json({
-          message: "New password cannot be the same as the old password",
-        });
+      return res.status(400).json({
+        message: "New password cannot be the same as the old password",
+      });
     }
 
     contestant.password = newPassword;
 
     await contestant.save();
+    logger.info({ message: "Password changed successfully" });
     res.json({ message: "Password changed successfully" });
   } catch (error) {
-    res.status(500).json(error.message,{ message: "Server error", error });
+    logger.error("Error changing password:", error);
+    res.status(500).json(error.message, { message: "Server error", error });
   }
 };

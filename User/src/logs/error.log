@@ -1,0 +1,1 @@
+2024-12-17T10:30:12.094Z [ERROR]: User validation failed: password: Path `password` (`olu`) is shorter than the minimum allowed length (6).

@@ -11,6 +11,7 @@ import generateOtp from "../utils/otpGenerator.js";
 import bcrypt from "bcrypt";
 import Vote from "../models/Vote.js";
 import { updateUserSchema } from "../utils/validation.js";
+import logger from "../utils/log/log.js";
 
 export const register = async (req, res) => {
   try {
@@ -41,14 +42,14 @@ export const register = async (req, res) => {
     await newUser.save();
     //send verification Email with generated OTP
     await sendVerificationEmail(newUser.email, otp);
-    // logger.info(newUser);
+    logger.info({message:`OTP successfully sent to ${newUser.email}`});
     return res.status(200).json({
       success: true,
       message: `OTP successfully sent to ${newUser.email}`,
       newUser,
     });
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -99,7 +100,7 @@ export const verifyOtp = async (req, res) => {
     //send welcome email
     await sendWelcomeEmail(user.email);
     // success response
-    // logger.info(user._doc);
+     logger.info({ message: "OTP successfully verified"});
     return res.status(200).json({
       success: true,
       message: "OTP successfully verified",
@@ -107,6 +108,7 @@ export const verifyOtp = async (req, res) => {
       token,
     });
   } catch (error) {
+    logger.error(error.message);
     return res.status(503).json({
       error: error.message,
       message: "An error occurred during OTP verification",
@@ -136,9 +138,10 @@ export const resendOtp = async (req, res) => {
 
     // Send email with new OTP
     await sendVerificationEmail(user.email, otpCode);
-
+logger.info({ message: "OTP resent successfully"});
     return res.status(200).json({ message: "OTP resent successfully" });
   } catch (error) {
+    logger.error(error.message);
     return res
       .status(500)
       .json({
@@ -183,7 +186,7 @@ export const login = async (req, res) => {
       role: user.role,
     };
     const token = createJwtToken(payload);
-
+logger.info({message: "User login successfully"})
     return res.status(201).json({
       success: true,
       message: "User login successfully",
@@ -191,7 +194,7 @@ export const login = async (req, res) => {
        token
        });
   } catch (error) {
-    console.log(error);
+    logger.error(error.message);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -228,11 +231,12 @@ export const forgetPassword = async (req, res) => {
     await user.save();
     // Send email
     await sendFgPasswordLink(email, resetLink);
+    logger.info({message: "Your Password Reset link has been sent to your mail" });
     return res
       .status(200)
       .json({ message: "Your Password Reset link has been sent to your mail" });
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -266,6 +270,7 @@ export const resetPassword = async (req, res, next) => {
 
       // Send email
       await sendResetPassConfirmation(user.email);
+      logger.info({ message: "User password reset successfully" });
       return res
         .status(200)
         .json({ message: "User password reset successfully" });
@@ -273,7 +278,7 @@ export const resetPassword = async (req, res, next) => {
       return res.status(401).json({ error: "Authentication error" });
     }
   } catch (error) {
-    console.log(error);
+    logger.error(error.message);
     next({ error: "Server error" });
   }
 };
@@ -283,7 +288,7 @@ export const getAllUsers = async (req, res) => {
     const users = await User.find();
     res.status(200).json(users);
   } catch (err) {
-    console.log(err);
+    logger.error(err.message);
     res.status(500).json("Server Error");
   }
 };
@@ -303,7 +308,7 @@ export const getUserByIdOrName = async (req, res) => {
     }
     res.status(200).json(user);
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     res.status(500).json("Server Error");
   }
 };
@@ -318,9 +323,10 @@ export const UserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+    logger.info({ message: "User Profile" }, user)
     res.status(200).json({ message: "User Profile" }, user);
   } catch (error) {
-    console.log(error.message);
+    logger.error(error.message);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -347,12 +353,14 @@ export const updateUser = async (req, res) => {
         message: "User not found",
       });
     }
+    logger.info({ message: "User updated successfully"})
     res.status(200).json({
       success: true,
       message: "User updated successfully",
       user,
     });
   } catch (error) {
+    logger.error(error.message);
     res.status(400).json({
       success: false,
       message: error.message,
@@ -374,12 +382,13 @@ export const deleteUser = async (req, res) => {
 
     // If the user is deleted successfully, delete their associated vote(s)
     await Vote.deleteMany({ user: user._id });
-
+logger.info({ message: "User and associated votes deleted successfully"})
     res.status(200).json({
       success: true,
       message: "User and associated votes deleted successfully",
     });
   } catch (error) {
+    logger.error(error.message)
     res.status(500).json({
       success: false,
       message: error.message,
@@ -420,8 +429,10 @@ export const changePassword = async (req, res) => {
 
     user.password = newPassword;
     await user.save();
+    logger.info({message: "Password changed successfully" })
     res.json({ message: "Password changed successfully" });
   } catch (error) {
+    logger.error(error.message)
     res.status(500).json({ message: "Server error", error });
   }
 };

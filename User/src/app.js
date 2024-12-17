@@ -5,9 +5,11 @@ import  authRoute from "./routes/authRoute.js";
 import voteRoute from "./routes/voteRoute.js";
 import contestantRoute from "./routes/contestantRoute.js";
 import commentRoute from "./routes/commentRoute.js";
+import logger from "./utils/log/log.js";
 import  http from "http";
 import axios from "axios";
 import cors from "cors";
+import morgan from 'morgan';
 
 const app = express();
 const server = http.createServer(app);
@@ -17,9 +19,17 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use(
+  morgan('combined', {
+      stream: {
+          write: (message) => logger.info(message.trim()), 
+      },
+  })
+);
 
 const corsOptions = { 
   origin: '*',
@@ -50,5 +60,5 @@ app.get('/stream', async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  logger.info(`Server is running on http://localhost:${PORT}`);
 });
