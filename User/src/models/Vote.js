@@ -1,4 +1,5 @@
-import mongoose, { Schema } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
 const voteSchema = new Schema({
   user: {
@@ -13,9 +14,8 @@ const voteSchema = new Schema({
   },
 },
 {
-  timestamps:true,
-  versionKey:false,
-  
+  timestamps: true,
+  versionKey: false,
 });
 
-export default mongoose.model("Vote", voteSchema);
+module.exports = mongoose.model("Vote", voteSchema);

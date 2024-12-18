@@ -1,4 +1,5 @@
-import mongoose, { Schema } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
 const subscriberSchema = new Schema({
     email: {
@@ -16,4 +17,4 @@ const subscriberSchema = new Schema({
     versionKey: false
 });
 
-export default mongoose.model("Subscriber", subscriberSchema);
+module.exports = mongoose.model("Subscriber", subscriberSchema);

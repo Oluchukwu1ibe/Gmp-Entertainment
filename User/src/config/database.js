@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import logger from "../utils/log/log.js";
+const mongoose = require('mongoose');
+const logger = require("../utils/log/log.js");
 
 mongoose.set('strictQuery', false);
 const { MONGO_URI } = process.env;
@@ -12,11 +12,10 @@ const connectDB = () => {
       logger.info("Successfully connected to database");
     })
     .catch((error) => {
-      logger.info("database connection failed. exiting now...");
+      logger.info("Database connection failed. Exiting now...");
       logger.error(error);
       process.exit(1);
     });
 };
-export default connectDB;
 
-
+module.exports = connectDB;

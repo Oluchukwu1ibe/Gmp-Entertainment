@@ -154,4 +154,4 @@ const welcomeTemplate = () => {
   `;
 };
 
-export default welcomeTemplate;
+module.exports = welcomeTemplate;

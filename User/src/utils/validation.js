@@ -1,4 +1,4 @@
-import Joi from 'joi';
+const  Joi = require('joi');
 
 const updateContestantSchema = Joi.object({
     displayName: Joi.string().required().min(1).max(50),
@@ -23,4 +23,4 @@ email: Joi.string().required().email({ minDomainSegments: 2 }).max(100),
 location: Joi.string().required().min(1).max(100)
   });
 
-export  {updateContestantSchema,updateUserSchema};
+  module.exports = {updateContestantSchema,updateUserSchema};

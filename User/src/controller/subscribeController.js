@@ -1,8 +1,7 @@
-import Subscriber from "../models/subscribe.js"
-import logger from '../utils/log/log.js';
+const Subscriber = require("../models/subscribe.js");
+const logger = require('../utils/log/log.js');
 
-
-export const subscribeNewsletter = async (req, res) => {
+const subscribeNewsletter = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -19,10 +18,12 @@ export const subscribeNewsletter = async (req, res) => {
 
         // Create new subscriber
         const newSubscriber = await Subscriber.create({ email });
-        logger.info({ message: 'Successfully subscribed to the newsletter', subscriber: newSubscriber })
+        logger.info({ message: 'Successfully subscribed to the newsletter', subscriber: newSubscriber });
         res.status(201).json({ message: 'Successfully subscribed to the newsletter', subscriber: newSubscriber });
     } catch (err) {
         logger.error('Error subscribing to newsletter', err.message);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+module.exports = { subscribeNewsletter };

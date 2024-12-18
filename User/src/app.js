@@ -1,15 +1,15 @@
-import 'dotenv/config'
-import express from "express";
-import connectDB from "./config/database.js";
-import  authRoute from "./routes/authRoute.js";
-import voteRoute from "./routes/voteRoute.js";
-import contestantRoute from "./routes/contestantRoute.js";
-import commentRoute from "./routes/commentRoute.js";
-import logger from "./utils/log/log.js";
-import  http from "http";
-import axios from "axios";
-import cors from "cors";
-import morgan from 'morgan';
+require('dotenv/config');
+const express = require('express');
+const connectDB = require('./config/database.js');
+const authRoute = require('./routes/authRoute.js');
+const voteRoute = require('./routes/voteRoute.js');
+const contestantRoute = require('./routes/contestantRoute.js');
+const commentRoute = require('./routes/commentRoute.js');
+const logger = require('./utils/log/log.js');
+const http = require('http');
+const axios = require('axios');
+const cors = require('cors');
+const morgan = require('morgan');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,16 +18,14 @@ const PORT = process.env.PORT || 3000;
 
 connectDB();
 
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(
   morgan('combined', {
-      stream: {
-          write: (message) => logger.info(message.trim()), 
-      },
+    stream: {
+      write: (message) => logger.info(message.trim()), 
+    },
   })
 );
 
@@ -39,9 +37,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use("/api", authRoute);
-app.use("/api/vote",voteRoute);
-app.use("/api/contestant",contestantRoute);
-app.use("/api/comment",commentRoute);
+app.use("/api/vote", voteRoute);
+app.use("/api/contestant", contestantRoute);
+app.use("/api/comment", commentRoute);
 
 app.get("/", (req, res) => {
   res.send("Welcome to our streaming Platform");

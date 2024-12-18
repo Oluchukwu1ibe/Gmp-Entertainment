@@ -1,8 +1,9 @@
-import User from "../models/User.js";
-import Comment from "../models/comment.js";
-import logger from "../utils/log/log.js";
+const User = require("../models/User.js");
+const Comment = require("../models/comment.js");
+const logger = require("../utils/log/log.js");
 
-export const createComment = async (req, res) => {
+
+exports. createComment = async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) {
@@ -30,7 +31,7 @@ export const createComment = async (req, res) => {
   }
 };
 
-export const getCommentById = async (req, res) => {
+exports. getCommentById = async (req, res) => {
   try {
     const { id } = req.params;
     const comment = await Comment.findById(id);
@@ -44,7 +45,7 @@ export const getCommentById = async (req, res) => {
   }
 };
 
-export const getAllComment = async (req, res) => {
+exports. getAllComment = async (req, res) => {
   try {
     // Find all comments and populate necessary fields
     const comments = await Comment.find()
@@ -79,7 +80,7 @@ export const getAllComment = async (req, res) => {
 };
 
 // Reply to a comment
-export const replyToComment = async (req, res) => {
+exports. replyToComment = async (req, res) => {
   try {
     const { text, parentCommentId } = req.body;
     const userId = req.user;
@@ -114,7 +115,7 @@ export const replyToComment = async (req, res) => {
 
 // likes
 
-export const likeComment = async (req, res) => {
+exports. likeComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const userId = req.user;
@@ -149,7 +150,7 @@ export const likeComment = async (req, res) => {
 
 // Dislike
 
-export const dislikeComment = async (req, res) => {
+exports. dislikeComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const userId = req.user;

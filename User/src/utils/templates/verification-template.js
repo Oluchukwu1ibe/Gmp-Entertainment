@@ -157,4 +157,4 @@ const verificationTemplate = (generateOtp) => {
     </html>`;
 };
 
-export default verificationTemplate;
+module.exports = verificationTemplate;

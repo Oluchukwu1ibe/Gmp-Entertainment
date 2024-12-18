@@ -1,19 +1,20 @@
-import User from "../models/User.js";
-import { createJwtToken, verifyUserToken } from "../middleware/token.js";
-import _ from "lodash";
-import {
+const User = require("../models/User.js");
+const { createJwtToken, verifyUserToken } = require("../middleware/token.js");
+const _ = require("lodash");
+const {
   sendFgPasswordLink,
   sendResetPassConfirmation,
   sendVerificationEmail,
   sendWelcomeEmail,
-} from "../utils/email-sender.js";
-import generateOtp from "../utils/otpGenerator.js";
-import bcrypt from "bcrypt";
-import Vote from "../models/Vote.js";
-import { updateUserSchema } from "../utils/validation.js";
-import logger from "../utils/log/log.js";
+} = require("../utils/email-sender.js");
+const generateOtp = require("../utils/otpGenerator.js");
+const bcrypt = require("bcrypt");
+const Vote = require("../models/Vote.js");
+const { updateUserSchema } = require("../utils/validation.js");
+const logger = require("../utils/log/log.js");
 
-export const register = async (req, res) => {
+
+exports. register = async (req, res) => {
   try {
     const { password, email } = req.body;
     // validate the input
@@ -54,7 +55,7 @@ export const register = async (req, res) => {
   }
 };
 
-export const verifyOtp = async (req, res) => {
+exports. verifyOtp = async (req, res) => {
   try {
     //  input
     const { otpCode } = req.body;
@@ -116,7 +117,7 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-export const resendOtp = async (req, res) => {
+exports. resendOtp = async (req, res) => {
   try {
     const { userId } = req.body;
 
@@ -151,7 +152,7 @@ logger.info({ message: "OTP resent successfully"});
   }
 };
 
-export const login = async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     // validate input
@@ -200,7 +201,7 @@ logger.info({message: "User login successfully"})
 };
 
 // forgot password
-export const forgetPassword = async (req, res) => {
+exports. forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
     // Validate input
@@ -242,7 +243,7 @@ export const forgetPassword = async (req, res) => {
 };
 
 // reset password
-export const resetPassword = async (req, res, next) => {
+exports. resetPassword = async (req, res, next) => {
   try {
     const { newPass, resetLinkToken } = req.body;
     if (resetLinkToken) {
@@ -283,7 +284,7 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
-export const getAllUsers = async (req, res) => {
+exports. getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
     res.status(200).json(users);
@@ -293,7 +294,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-export const getUserByIdOrName = async (req, res) => {
+exports. getUserByIdOrName = async (req, res) => {
   let query = {};
   if (req.params.id) {
     query._id = req.params.id;
@@ -313,7 +314,7 @@ export const getUserByIdOrName = async (req, res) => {
   }
 };
 
-export const UserProfile = async (req, res) => {
+exports. UserProfile = async (req, res) => {
   try {
     const userId = req.user;
 
@@ -331,7 +332,7 @@ export const UserProfile = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
+exports. updateUser = async (req, res) => {
   const { error } = updateUserSchema.validate(req.body);
 
   if (error) {
@@ -368,7 +369,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-export const deleteUser = async (req, res) => {
+exports. deleteUser = async (req, res) => {
   try {
     // Find and delete the user
     const user = await User.findByIdAndDelete(req.params.id);
@@ -397,7 +398,7 @@ logger.info({ message: "User and associated votes deleted successfully"})
 };
 
 // change password
-export const changePassword = async (req, res) => {
+exports. changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   try {

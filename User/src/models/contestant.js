@@ -1,5 +1,7 @@
-import { Schema, model } from "mongoose";
-import bcrypt from 'bcrypt';
+const mongoose = require("mongoose");
+const bcrypt = require('bcrypt');
+const { Schema, model } = mongoose;
+
 const contestantSchema = new Schema({
   fullName: {
     type: String,
@@ -39,7 +41,7 @@ const contestantSchema = new Schema({
   aboutMe: {
     type: String,
   },
-  image:{
+  image: {
     type: String,
   },
   voteCount: {
@@ -63,12 +65,10 @@ const contestantSchema = new Schema({
     expiresIn: "5m",
   },
   role: { type: String, enum: ["admin", "contestant"], default: "contestant" },
-  
 },
 {
-  timestamps:true,
-  versionKey:false,
-  
+  timestamps: true,
+  versionKey: false,
 });
 
 contestantSchema.pre("save", async function (next) {
@@ -83,4 +83,4 @@ contestantSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-export default model("Contestant", contestantSchema);
+module.exports = model("Contestant", contestantSchema);

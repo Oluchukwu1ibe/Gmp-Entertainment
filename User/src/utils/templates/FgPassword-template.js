@@ -169,4 +169,4 @@ const fgPasswordTemplate = (resetLink) => {
     </html>`;
 };
 
-export default fgPasswordTemplate;
+module.exports =fgPasswordTemplate;

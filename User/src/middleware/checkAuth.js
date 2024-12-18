@@ -1,6 +1,6 @@
-import { verifyContestantToken, verifyUserToken } from "./token.js";
+const { verifyContestantToken, verifyUserToken } = require("./token.js");
 
-export const authenticateUserToken = async (req, res, next) => {
+const authenticateUserToken = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
 
@@ -21,7 +21,7 @@ export const authenticateUserToken = async (req, res, next) => {
       next();
     } catch (error) {
       console.error("Error decoding user token:", error.message);
-      return res.status(403).json({ error: "Invalid user token, or an expired token"});
+      return res.status(403).json({ error: "Invalid user token, or an expired token" });
     }
   } catch (err) {
     console.error("Authentication error:", err.message);
@@ -30,7 +30,7 @@ export const authenticateUserToken = async (req, res, next) => {
 };
 
 // Middleware for authenticating contestant tokens
-export const authenticateContestantToken = async (req, res, next) => {
+const authenticateContestantToken = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
 
@@ -51,10 +51,12 @@ export const authenticateContestantToken = async (req, res, next) => {
       next();
     } catch (error) {
       console.error("Error decoding contestant token:", error.message);
-      return res.status(403).json({ error: "Invalid contestant token,or an expired token" });
+      return res.status(403).json({ error: "Invalid contestant token, or an expired token" });
     }
   } catch (err) {
     console.error("Authentication error:", err.message);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+module.exports = { authenticateUserToken, authenticateContestantToken };

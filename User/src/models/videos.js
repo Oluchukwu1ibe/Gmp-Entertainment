@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
 
 // Define the video schema for auditioning
 const videoSchema = new Schema({
@@ -35,4 +36,4 @@ const videoSchema = new Schema({
   versionKey: false
 });
 
-export default model("Video", videoSchema);
+module.exports = model("Video", videoSchema);

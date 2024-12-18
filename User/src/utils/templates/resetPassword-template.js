@@ -160,4 +160,4 @@ const resetPasswordTemplate = () => {
     </html>`;
 };
 
-export default resetPasswordTemplate;
+module.exports = resetPasswordTemplate;

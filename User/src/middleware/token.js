@@ -1,11 +1,11 @@
-import  jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
-export const createJwtToken = (payload) => {
+const createJwtToken = (payload) => {
   const token = jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: "1day" });
   return token;
 };
 
-export const verifyUserToken = (token) => {
+const verifyUserToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.TOKEN_KEY);
     if (!decoded.userId) {
@@ -17,7 +17,7 @@ export const verifyUserToken = (token) => {
   }
 };
 
-export const verifyContestantToken = (token) => {
+const verifyContestantToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.TOKEN_KEY);
     if (!decoded.contestantId) {
@@ -29,3 +29,4 @@ export const verifyContestantToken = (token) => {
   }
 };
 
+module.exports = { createJwtToken, verifyUserToken, verifyContestantToken };

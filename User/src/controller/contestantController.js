@@ -1,20 +1,20 @@
-import Video from "../models/videos.js";
-import { createJwtToken, verifyContestantToken } from "../middleware/token.js";
-import Contestant from "../models/contestant.js";
-import cloudinary from "../utils/cloudinary.js";
-import {
+const Video = require("../models/videos.js");
+const { createJwtToken, verifyContestantToken } = require("../middleware/token.js");
+const Contestant = require("../models/contestant.js");
+const cloudinary = require("../utils/cloudinary.js");
+const {
   sendFgPasswordLink,
   sendResetPassConfirmation,
   sendVerificationEmail,
   sendWelcomeEmail,
-} from "../utils/email-sender.js";
-import generateOtp from "../utils/otpGenerator.js";
-import { updateContestantSchema } from "../utils/validation.js";
-import bcrypt from "bcrypt";
-import logger from "../utils/log/log.js";
+} = require("../utils/email-sender.js");
+const generateOtp = require("../utils/otpGenerator.js");
+const { updateContestantSchema } = require("../utils/validation.js");
+const bcrypt = require("bcrypt");
+const logger = require("../utils/log/log.js");
 
 // register contestant
-export const createContestant = async (req, res) => {
+exports. createContestant = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
@@ -59,7 +59,7 @@ export const createContestant = async (req, res) => {
 };
 
 // verify the otp
-export const verifyOtp = async (req, res) => {
+exports. verifyOtp = async (req, res) => {
   try {
     //  input
     const { otpCode } = req.body;
@@ -126,7 +126,7 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-export const resendOtp = async (req, res) => {
+exports. resendOtp = async (req, res) => {
   try {
     const { contestantId } = req.body;
 
@@ -158,7 +158,7 @@ export const resendOtp = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+exports. login = async (req, res) => {
   try {
     const { email, password } = req.body;
     // validate input
@@ -207,7 +207,7 @@ export const login = async (req, res) => {
 };
 
 // forgot password
-export const forgetPassword = async (req, res) => {
+exports.forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
     // Validate input
@@ -251,7 +251,7 @@ export const forgetPassword = async (req, res) => {
 };
 
 // reset password
-export const resetPassword = async (req, res, next) => {
+exports. resetPassword = async (req, res, next) => {
   try {
     const { newPass, resetLinkToken } = req.body;
     if (resetLinkToken) {
@@ -293,7 +293,7 @@ export const resetPassword = async (req, res, next) => {
 };
 
 //   Get all contestant
-export const getAllContestants = async (req, res) => {
+exports. getAllContestants = async (req, res) => {
   try {
     const contestants = await Contestant.find();
     res.status(200).json(contestants);
@@ -304,7 +304,7 @@ export const getAllContestants = async (req, res) => {
 };
 
 // Get a single contestant by Id or name
-export const getContestantByIdOrName = async (req, res) => {
+exports. getContestantByIdOrName = async (req, res) => {
   let query = {};
   if (req.params.id) {
     query._id = req.params.id;
@@ -325,7 +325,7 @@ export const getContestantByIdOrName = async (req, res) => {
 };
 
 // profile
-export const contestantProfile = async (req, res) => {
+exports. contestantProfile = async (req, res) => {
   try {
     const contestantId = req.contestant;
 
@@ -343,7 +343,7 @@ export const contestantProfile = async (req, res) => {
   }
 };
 // update profile
-export const updateContestant = async (req, res) => {
+exports. updateContestant = async (req, res) => {
   const { error } = updateContestantSchema.validate(req.body);
 
   if (error) {
@@ -385,7 +385,7 @@ export const updateContestant = async (req, res) => {
   }
 };
 
-export const deleteContestant = async (req, res) => {
+exports. deleteContestant = async (req, res) => {
   try {
     const contestant = await Contestant.findById(req.params.id);
     if (!contestant) {
@@ -416,7 +416,7 @@ export const deleteContestant = async (req, res) => {
   }
 };
 // upload image
-export const uploadImage = async (req, res) => {
+exports. uploadImage = async (req, res) => {
   try {
     const contestantId = req.contestant;
 
@@ -458,7 +458,7 @@ export const uploadImage = async (req, res) => {
 };
 
 // upload video content
-export const uploadVideo = async (req, res) => {
+exports. uploadVideo = async (req, res) => {
   try {
     const contestantId = req.contestant;
 
@@ -517,7 +517,7 @@ export const uploadVideo = async (req, res) => {
 
 // delete video
 
-export const deleteVideo = async (req, res) => {
+exports. deleteVideo = async (req, res) => {
   try {
     const contestantId = req.contestant;
 
@@ -549,7 +549,7 @@ export const deleteVideo = async (req, res) => {
 };
 
 // change password
-export const changePassword = async (req, res) => {
+exports. changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   try {
