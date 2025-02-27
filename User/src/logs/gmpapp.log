@@ -4,3 +4,5 @@
 2024-12-18T11:47:57.776Z [INFO]: 12/18/2024, 12:47:19 PM - Email sent successfully:250 2.0.0 OK  1734522441 a640c23a62f3a-aabfbbb7a52sm42694066b.58 - gsmtp
 2024-12-18T11:47:57.777Z [INFO]: OTP successfully sent to olu@yopmal.com
 2024-12-18T11:47:57.781Z [INFO]: ::ffff:127.0.0.1 - - [18/Dec/2024:11:47:57 +0000] "POST /api/register HTTP/1.1" 200 425 "-" "Thunder Client (https://www.thunderclient.com)"
+2025-02-25T12:59:00.063Z [INFO]: Server is running on http://localhost:2024
+2025-02-25T12:59:07.176Z [INFO]: Successfully connected to database
