@@ -1,4 +1,6 @@
-require('dotenv/config');
+require('dotenv').config({
+  path: process.env.NODE_ENV === "production" ? ".env.production" : ".env.development",
+});
 const express = require('express');
 const connectDB = require('./config/database.js');
 const authRoute = require('./routes/authRoute.js');
@@ -10,6 +12,8 @@ const http = require('http');
 const axios = require('axios');
 const cors = require('cors');
 const morgan = require('morgan');
+const passport = require("passport");
+require("./middleware/passport");
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +40,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(passport.initialize());
 app.use("/api", authRoute);
 app.use("/api/vote", voteRoute);
 app.use("/api/contestant", contestantRoute);

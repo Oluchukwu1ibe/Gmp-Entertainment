@@ -15,6 +15,7 @@ const {
 } = require("../controller/authController");
 const { authenticateUserToken } = require("../middleware/checkAuth");
 const { subscribeNewsletter } = require("../controller/subscribeController");
+const passport = require("passport");
 
 const router = express.Router();
 
@@ -31,5 +32,28 @@ router.delete('/users/:id', deleteUser);
 router.get('/profile', authenticateUserToken, UserProfile);
 router.post('/change-password', authenticateUserToken, changePassword);
 router.post('/subscribe', subscribeNewsletter);
+router.get("/auth/google", passport.authenticate("google-user", { scope: ["profile", "email"] }));
+router.get(
+  "/auth/google/callback",
+  (req, res, next) => {
+    passport.authenticate("google-user", { session: false }, (err, authData, info) => {
+      if (err || !authData) {
+        return res.status(400).json({ error: "Google authentication failed" });
+      }
+
+      // Extract userResponse and token correctly
+      const { userResponse, token } = authData;
+
+      return res.status(200).json({
+        success: true,
+        message: "Google authentication successful",
+        user: userResponse,
+        token: token,
+      });
+    })(req, res, next);
+  }
+);
+
+
 
 module.exports = router;

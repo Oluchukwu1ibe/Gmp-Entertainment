@@ -158,45 +158,71 @@ exports. resendOtp = async (req, res) => {
   }
 };
 
-exports. login = async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // validate input
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Please provide an email and password" });
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({ message: "Please provide an email" });
     }
-    // find the user by their email address
+
+    // Find the contestant by their email address
     const contestant = await Contestant.findOne({ email });
 
     if (!contestant) {
-      return res.status(401).json({ message: "Invalid email" });
+      return res.status(404).json({ message: "Email not found" });
+    }
+
+    // 🔴 If the contestant signed up with Google, log them in WITHOUT a password
+    if (contestant.googleId) {
+      logger.info({ message: "Google contestant login successful" });
+
+      const payload = {
+        userId: contestant._id,
+        email: contestant.email,
+        role: contestant.role,
+      };
+
+      const token = createJwtToken(payload);
+
+      return res.status(200).json({
+        success: true,
+        message: "Google contestant login successful",
+        contestant,
+        token,
+      });
+    }
+
+    // 🔴 If contestant signed up with email/password, validate password
+    if (!password) {
+      return res.status(400).json({ message: "Please provide a password" });
     }
 
     const isPasswordValid = await contestant.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
     }
-    // check if the otp has been verified and if not delete the contestant credentials
+
+    // 🔴 Check if the OTP has been verified; if not, delete the contestant
     if (!contestant.isVerified) {
       await Contestant.findByIdAndDelete(contestant.id);
-      return res
-        .status(403)
-        .json({ message: "Please verify your email first" });
+      return res.status(403).json({ message: "Please verify your email first" });
     }
-    //  Create JWT payload and sign the token
+
+    // ✅ Create JWT payload and sign the token
     const payload = {
-      contestantId: contestant._id,
-      fullName: contestant.fullName,
+      userId: contestant._id,
       email: contestant.email,
       role: contestant.role,
     };
+
     const token = createJwtToken(payload);
-    logger.info({ message: "Contestant login successfully" });
-    return res.status(201).json({
+    logger.info({ message: "Contestant login successful" });
+
+    return res.status(200).json({
       success: true,
-      message: "Contestant login successfully",
+      message: "Contestant login successful",
       contestant,
       token,
     });
@@ -205,6 +231,7 @@ exports. login = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
 
 // forgot password
 exports.forgetPassword = async (req, res) => {

@@ -155,50 +155,77 @@ logger.info({ message: "OTP resent successfully"});
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // validate input
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Please provide an email and password" });
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({ message: "Please provide an email" });
     }
-    // find the user by their email address
+
+    // Find the user by their email address
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "Email not Found" });
+      return res.status(404).json({ message: "Email not found" });
+    }
+
+    // If user signed up with Google, do not check password
+    if (user.googleId) {
+      logger.info({ message: "Google user login successful" });
+
+      const payload = {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const token = createJwtToken(payload);
+
+      return res.status(200).json({
+        success: true,
+        message: "User login successful",
+        user,
+        token,
+      });
+    }
+
+    // If user signed up with email/password, validate password
+    if (!password) {
+      return res.status(400).json({ message: "Please provide a password" });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
     }
-    // check if the otp has been verified and if not delete the user credentials
+
+    // Check if the OTP has been verified, if not delete the user
     if (!user.isVerified) {
       await User.findByIdAndDelete(user.id);
-      return res
-        .status(403)
-        .json({ message: "Please verify your email first" });
+      return res.status(403).json({ message: "Please verify your email first" });
     }
 
-    //  Create JWT payload and sign the token
+    // Create JWT payload and sign the token
     const payload = {
       userId: user._id,
       email: user.email,
       role: user.role,
     };
+
     const token = createJwtToken(payload);
-logger.info({message: "User login successfully"})
+    logger.info({ message: "User login successfully" });
+
     return res.status(201).json({
       success: true,
       message: "User login successfully",
       user,
-       token
-       });
+      token,
+    });
   } catch (error) {
     logger.error(error.message);
     return res.status(500).json({ error: error.message });
   }
 };
+
 
 // forgot password
 exports. forgetPassword = async (req, res) => {

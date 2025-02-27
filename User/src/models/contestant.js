@@ -3,6 +3,11 @@ const bcrypt = require('bcrypt');
 const { Schema, model } = mongoose;
 
 const contestantSchema = new Schema({
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true, 
+  },
   fullName: {
     type: String,
     required: true,
@@ -16,8 +21,7 @@ const contestantSchema = new Schema({
     lowercase: true,
   },
   password: {
-    type: String,
-    required: true, 
+    type: String, 
     alphanumeric: true,
     trim: true,
     minLength: 6,
